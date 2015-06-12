@@ -1,0 +1,432 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>DapperPlus</name>
+    </assembly>
+    <members>
+        <member name="P:DapperPlus.Attributes.PrimaryKeyAttribute.AutoIncrement">
+            <summary>
+            Indicate a auto increment column type
+            </summary>
+        </member>
+        <member name="P:DapperPlus.Attributes.PrimaryKeyAttribute.Order">
+            <summary>
+            Indicate a primary key order, for composite primary key.
+            </summary>
+        </member>
+        <member name="P:DapperPlus.Attributes.PrimaryKeyAttribute.Descending">
+            <summary>
+            Descending
+            </summary>
+        </member>
+        <member name="P:DapperPlus.Attributes.ReferenceAttribute.ReferenceType">
+            <summary>
+            Refered type.
+            </summary>
+        </member>
+        <member name="P:DapperPlus.Attributes.ReferenceAttribute.CascadeDelete">
+            <summary>
+            on delete cascade
+            </summary>
+        </member>
+        <member name="P:DapperPlus.Attributes.ReferenceAttribute.CascadeUpdate">
+            <summary>
+            On update cascade
+            </summary>
+        </member>
+        <member name="P:DapperPlus.Attributes.ReferenceAttribute.Order">
+            <summary>
+            For composite primary key
+            </summary>
+        </member>
+        <member name="T:DapperPlus.DbServer">
+            <summary>
+            DbServer meant to handle Database Server management.
+            This meant to be Sigleton in app lifecyle in most case
+            </summary>
+        </member>
+        <member name="M:DapperPlus.DbServer.#ctor(System.Collections.Generic.IEnumerable{System.Type},System.Data.IDbConnection,DapperPlus.Abstract.SqlGenerator)">
+            <summary>
+            A root/admin connection is required.
+            </summary>
+            <param name="rootConnection"></param>
+        </member>
+        <member name="M:DapperPlus.DbServer.GetTableKey(System.Type[])">
+            <summary>
+            Make an standard table key for fast access
+            </summary>
+            <param name="keys"></param>
+            <returns></returns>
+        </member>
+        <member name="M:DapperPlus.DbServer.GetTable(System.Type[])">
+            <summary>
+            Return table for Type or Types(many-to-many)
+            </summary>
+        </member>
+        <member name="M:DapperPlus.DbServer.Exists(System.String)">
+            <summary>
+            Check if database exists
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:DapperPlus.DbServer.Create(System.String)">
+            <summary>
+            Create the database
+            </summary>
+        </member>
+        <member name="M:DapperPlus.DbServer.Drop(System.String)">
+            <summary>
+            Remove the database
+            </summary>
+        </member>
+        <member name="M:DapperPlus.DbServer.Update(System.String)">
+            <summary>
+            Update database structure
+            </summary>
+        </member>
+        <member name="M:DapperPlus.DbServer.Backup(System.String,System.Boolean)">
+            <summary>
+            Perform a Server level backup to specified path
+            </summary>
+            <param name="path">backup path</param>
+            <param name="incremental">indicate a incremental backup</param>
+        </member>
+        <member name="M:DapperPlus.DbServer.Wrap(System.Data.IDbConnection,System.Action{System.String})">
+            <summary>
+            Wrap a IDbConnection to provide more function, like Insert/Update/Delete and Logging.
+            </summary>
+            <param name="connection">connection to be wrapped</param>
+            <param name="logger">Override DbServer level logger</param>
+            <returns></returns>
+        </member>
+        <member name="P:DapperPlus.DbServer.Logger">
+            <summary>
+            Setup default logger
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DbServer.Generator">
+            <summary>
+            Return SqlGenerator instance
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DbServer.InitialScript">
+            <summary>
+            return create tabls scripts
+            </summary>
+        </member>
+        <member name="T:DapperPlus.DOM.Abstract.TableRes">
+            <summary>
+            Represent a Table Resource
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Abstract.Base.Name">
+            <summary>
+            Represent DOM name
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Abstract.TableRes.Table">
+            <summary>
+            Belongs to
+            </summary>
+        </member>
+        <member name="M:DapperPlus.DOM.Column.CalculateSimilarity(DapperPlus.DOM.Column)">
+            <summary>
+            Calculate similarity to another column
+            </summary>
+            <param name="other">Other column</param>
+            <returns>Similarity</returns>
+        </member>
+        <member name="P:DapperPlus.DOM.Column.DataType">
+            <summary>
+            Database Type
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Column.Precision">
+            <summary>
+            Extra def info like length/precision
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Column.Default">
+            <summary>
+            Default value
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Column.AutoIncrement">
+            <summary>
+            Indicate if column is AutoIncrement
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Column.NotNull">
+            <summary>
+            Indicate not null column
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Column.PrimaryKey">
+            <summary>
+            Indicates if primarykey, support composite
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Column.Order">
+            <summary>
+            For composite primary key
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.ForeignKey.ReferType">
+            <summary>
+            Foreig Table Type
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.ForeignKey.ReferTable">
+            <summary>
+            Foreig Table
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.ForeignKey.CascadeUpdate">
+            <summary>
+            Cascade update
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.ForeignKey.CascadeDelete">
+            <summary>
+            Cascade delete
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Index.Columns">
+            <summary>
+            As in { Column: descending } pair.
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Index.Unique">
+            <summary>
+            Indicate if an index is unique
+            </summary>
+        </member>
+        <member name="M:DapperPlus.DOM.Table.#ctor(System.Type[])">
+            <summary>
+            many to many relation table
+            </summary>
+            <param name="m2m">Ordered 2 types</param>
+        </member>
+        <member name="M:DapperPlus.DOM.Table.CalculateSimilarity(DapperPlus.DOM.Table)">
+            <summary>
+            Calculate similary to other Table
+            </summary>
+            <param name="other">Other Table</param>
+            <returns>similarity</returns>
+        </member>
+        <member name="P:DapperPlus.DOM.Table.Type">
+            <summary>
+            Rlative type
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Table.ManyToMany">
+            <summary>
+            As in many-to-many
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Table.IdColumn">
+            <summary>
+            We have an auto incremental id column in most case.
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Table.Columns">
+            <summary>
+            Columns
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Table.Indexes">
+            <summary>
+            Indexes
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Table.ForeignKeys">
+            <summary>
+            Foreign Keys
+            </summary>
+        </member>
+        <member name="P:DapperPlus.DOM.Table.PrimaryKey">
+            <summary>
+            Return primary key
+            </summary>
+        </member>
+        <member name="T:DapperPlus.Abstract.SqlGenerator">
+            <summary>
+            Generate the SQL script
+            </summary>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.GetCreateDatabaseSql(System.String)">
+            <summary>
+            return a CREATE DATABASE script 
+            </summary>
+            <param name="dbname">name of database to be created</param>
+            <returns></returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.GetDropDatabaseSql(System.String)">
+            <summary>
+            return a DROP DATABASE script
+            </summary>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.GetSingleUserModeSql(System.String)">
+            <summary>
+            return sql script to set database in Single User Model
+            </summary>
+            <param name="dbname">name of database to be droped</param>
+            <returns></returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.GetInsertIdSql">
+            <summary>
+            return sql to select inserted id
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.CreateTables(System.Collections.Generic.IEnumerable{DapperPlus.DOM.Table})">
+            <summary>
+            Generate create data base script
+            </summary>
+            <param name="name"></param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.CreateMigration(System.Collections.Generic.IEnumerable{DapperPlus.DOM.Table},System.Collections.Generic.IEnumerable{DapperPlus.DOM.Table})">
+            <summary>
+            Create migration
+            </summary>
+            <param name="from">Old one</param>
+            <param name="to">New one</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.CreateTable(DapperPlus.DOM.Table)">
+            <summary>
+            Generate create table script
+            </summary>
+            <param name="table">Table DOM</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.DropTable(DapperPlus.DOM.Table)">
+            <summary>
+            Generate drop table script
+            </summary>
+            <param name="table">Table to drop</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.RenameTable(DapperPlus.DOM.Table,DapperPlus.DOM.Table)">
+            <summary>
+            Generate rename talbe script
+            </summary>
+            <param name="from">Old one</param>
+            <param name="to">New one</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.AddColumn(DapperPlus.DOM.Column)">
+            <summary>
+            Generate add new column script
+            </summary>
+            <param name="column">new column to add</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.DropColumn(DapperPlus.DOM.Column)">
+            <summary>
+            Generate drop column script
+            </summary>
+            <param name="column"></param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.RenameColumn(DapperPlus.DOM.Column,DapperPlus.DOM.Column)">
+            <summary>
+            Generate rename column script
+            </summary>
+            <param name="from">Old one</param>
+            <param name="to">New one</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.ChangeColumn(DapperPlus.DOM.Column)">
+            <summary>
+            Generate change column definition script
+            </summary>
+            <param name="column">Column to be changed</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.CreateIndex(DapperPlus.DOM.Index)">
+            <summary>
+            Generate create index script
+            </summary>
+            <param name="index">Index DOM</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.DropIndex(DapperPlus.DOM.Index)">
+            <summary>
+            Generate drop index script
+            </summary>
+            <param name="index">index to drop</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.RenameIndex(DapperPlus.DOM.Index,DapperPlus.DOM.Index)">
+            <summary>
+            Generate rename index script
+            </summary>
+            <param name="from">Old one</param>
+            <param name="to">New one</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.AddForeignKey(DapperPlus.DOM.ForeignKey)">
+            <summary>
+            Generate foreign key script
+            </summary>
+            <param name="foreignKey">ForeignKey to create</param>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.QuoteTable(DapperPlus.DOM.Table)">
+            <summary>
+            Table name convertion.
+            </summary>
+            <param name="table">table to be quoted</param>
+            <returns>Quoted table name</returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.QuoteColumn(DapperPlus.DOM.Column)">
+            <summary>
+            Column name convertion.
+            </summary>
+            <param name="column">Column to be quoted</param>
+            <returns>Quoted column name</returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.Quote(System.String)">
+            <summary>
+            Quote a database object
+            </summary>
+            <param name="sqlObject"></param>
+            <returns>Quoted object</returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.MapType(DapperPlus.DOM.Column)">
+            <summary>
+            Return database type string for a column
+            </summary>
+            <param name="column">Column DOM</param>
+            <returns>string</returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.ToString">
+            <summary>
+            Output scripts
+            </summary>
+            <returns>Sql scripts</returns>
+        </member>
+        <member name="M:DapperPlus.Abstract.SqlGenerator.QuoteText(System.String)">
+            <summary>
+            Return quoted text like 'User''s note'
+            </summary>
+            <param name="text">text</param>
+            <returns></returns>
+        </member>
+        <member name="T:DapperPlus.Linq.Sql">
+            <summary>
+            Sql helper to do function and formation
+            </summary>
+        </member>
+        <member name="T:DapperPlus.Migrations.Migrator">
+            <summary>
+            Responsible for create a new database or update database structure, and even delete one
+            </summary>
+        </member>
+        <member name="M:DapperPlus.Migrations.Migrator.#ctor">
+            <summary>
+            Constructor
+            </summary>
+            <param name="dbname">Database to be migrated</param>
+            <param name="types">All entity types</param>
+            <param name="connection">Connection to default database with privillege to Create/Remove/Update database</param>
+            <param name="generator">Dialected sql generator</param>
+        </member>
+        <member name="T:DapperPlus.Sheath">
+            <summary>
+            provide sql loggin functionality
+            </summary>
+        </member>
+    </members>
+</doc>
