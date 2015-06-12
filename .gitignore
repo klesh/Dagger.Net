@@ -99,7 +99,7 @@ publish/
 ## TODO: If you have NuGet Package Restore enabled, uncomment the next line
 #packages/
 *.nupkg
-nuget/lib
+src/Dagger.Net/nuget/lib/
 
 # Windows Azure Build Output
 csx
