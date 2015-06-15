@@ -5,16 +5,22 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0158698E-A741-40E8-B702-F06C86A9467D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dagger.Net", "src\Dagger.Net\Dagger.Net.csproj", "{2E2BA7D3-C770-4AEF-9EE2-D22F9E983BEA}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dagger.Net.PostgresSQL", "src\Dagger.Net.PostgresSQL\Dagger.Net.PostgresSQL.csproj", "{022A65F4-67A9-47EE-AECA-FA715D23D58E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dagger.Net.Tests", "src\Dagger.Net.Tests\Dagger.Net.Tests.csproj", "{03D1C58B-A561-4695-A2A3-329DF83628A7}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EAD5D0A-0A78-4B35-8EAB-BD24E8B31E06}"
 	ProjectSection(SolutionItems) = preProject
+		nuget\Dagger.nuspec = nuget\Dagger.nuspec
+		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaggerNet", "src\DaggerNet\DaggerNet.csproj", "{2E2BA7D3-C770-4AEF-9EE2-D22F9E983BEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaggerNet.PostgresSQL", "src\DaggerNet.PostgresSQL\DaggerNet.PostgresSQL.csproj", "{022A65F4-67A9-47EE-AECA-FA715D23D58E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaggerNet.PowerShell", "src\DaggerNet.PowerShell\DaggerNet.PowerShell.csproj", "{A7218BA1-CB12-4851-B717-F509DA9299EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaggerNet.Tests", "src\DaggerNet.Tests\DaggerNet.Tests.csproj", "{03D1C58B-A561-4695-A2A3-329DF83628A7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emmola.Helpers", "..\Emmola.Helpers\src\Emmola.Helpers\Emmola.Helpers.csproj", "{85376ECC-D02F-4BC8-B60A-AB5B6E5418E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,10 +36,18 @@ Global
 		{022A65F4-67A9-47EE-AECA-FA715D23D58E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{022A65F4-67A9-47EE-AECA-FA715D23D58E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{022A65F4-67A9-47EE-AECA-FA715D23D58E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7218BA1-CB12-4851-B717-F509DA9299EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7218BA1-CB12-4851-B717-F509DA9299EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7218BA1-CB12-4851-B717-F509DA9299EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7218BA1-CB12-4851-B717-F509DA9299EB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{03D1C58B-A561-4695-A2A3-329DF83628A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{03D1C58B-A561-4695-A2A3-329DF83628A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03D1C58B-A561-4695-A2A3-329DF83628A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03D1C58B-A561-4695-A2A3-329DF83628A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85376ECC-D02F-4BC8-B60A-AB5B6E5418E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85376ECC-D02F-4BC8-B60A-AB5B6E5418E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85376ECC-D02F-4BC8-B60A-AB5B6E5418E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85376ECC-D02F-4BC8-B60A-AB5B6E5418E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -41,6 +55,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{2E2BA7D3-C770-4AEF-9EE2-D22F9E983BEA} = {0158698E-A741-40E8-B702-F06C86A9467D}
 		{022A65F4-67A9-47EE-AECA-FA715D23D58E} = {0158698E-A741-40E8-B702-F06C86A9467D}
+		{A7218BA1-CB12-4851-B717-F509DA9299EB} = {0158698E-A741-40E8-B702-F06C86A9467D}
 		{03D1C58B-A561-4695-A2A3-329DF83628A7} = {0158698E-A741-40E8-B702-F06C86A9467D}
+		{85376ECC-D02F-4BC8-B60A-AB5B6E5418E9} = {0158698E-A741-40E8-B702-F06C86A9467D}
 	EndGlobalSection
 EndGlobal
