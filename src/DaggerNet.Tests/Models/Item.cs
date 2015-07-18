@@ -1,7 +1,7 @@
 ﻿using DaggerNet.Attributes;
 using System.ComponentModel.DataAnnotations;
 
-namespace DaggerNetTest.Models
+namespace DaggerNet.Tests.Models
 {
   public class Item : Entity
   {

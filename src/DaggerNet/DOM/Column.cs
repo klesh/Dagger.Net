@@ -9,6 +9,13 @@ namespace DaggerNet.DOM
   [Serializable]
   public class Column : TableRes, ISimilarity<Column>
   {
+    [NonSerialized]
+    private MethodInfo _getMethod;
+    [NonSerialized]
+    private MethodInfo _setMethod;
+    [NonSerialized]
+    private PropertyInfo _propertyInfo;
+
     public Column(Table table)
     {
       Table = table;
@@ -18,16 +25,16 @@ namespace DaggerNet.DOM
     {
       Table = table;
       Name = property.Name;
-      GetMethod = property.GetGetMethod();
-      SetMethod = property.GetSetMethod();
-      PropertyInfo = property;
+      _getMethod = property.GetGetMethod();
+      _setMethod = property.GetSetMethod();
+      _propertyInfo = property;
     }
 
-    internal MethodInfo GetMethod { get; private set; }
+    internal MethodInfo GetMethod { get { return _getMethod; } }
 
-    internal MethodInfo SetMethod { get; private set; }
+    internal MethodInfo SetMethod { get { return _setMethod; } }
 
-    internal PropertyInfo PropertyInfo { get; private set; }
+    internal PropertyInfo PropertyInfo { get { return _propertyInfo; } }
 
     /// <summary>
     /// Database Type
@@ -63,6 +70,11 @@ namespace DaggerNet.DOM
     /// For composite primary key
     /// </summary>
     public int Order { get; set; }
+
+    /// <summary>
+    /// Update timestamp while it's updated
+    /// </summary>
+    public bool UpdateTime { get; set; }
 
     public string NewName { get; set; }
 

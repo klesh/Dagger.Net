@@ -1,32 +1,38 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Data.Common;
 
 namespace DaggerNet
 {
   /// <summary>
   /// provide sql loggin functionality
   /// </summary>
-  public class Sheath : IDbCommand
+  [DesignerCategory("")]
+  public class Sheath : DbCommand
   {
-    private IDbCommand _command;
+    private DbCommand _command;
     private Action<string> _logger;
 
-    public Sheath(IDbCommand command, Action<string> logger)
+    public Sheath(DbCommand command, Action<string> logger)
     {
       _command = command;
       _logger = logger;
     }
 
-    public void Cancel()
+    protected void BeforeExecute()
+    {
+      _logger(this.CommandText);
+      if (this.Connection.State == ConnectionState.Closed)
+        this.Connection.Open();
+    }
+
+    public override void Cancel()
     {
       _command.Cancel();
     }
 
-    public string CommandText
+    public override string CommandText
     {
       get
       {
@@ -38,11 +44,11 @@ namespace DaggerNet
       }
     }
 
-    public int CommandTimeout
+    public override int CommandTimeout
     {
       get
       {
-        return _command.CommandTimeout;
+        return _command.CommandTimeout ;
       }
       set
       {
@@ -50,7 +56,7 @@ namespace DaggerNet
       }
     }
 
-    public CommandType CommandType
+    public override CommandType CommandType
     {
       get
       {
@@ -62,7 +68,12 @@ namespace DaggerNet
       }
     }
 
-    public IDbConnection Connection
+    protected override DbParameter CreateDbParameter()
+    {
+      return _command.CreateParameter();
+    }
+
+    protected override DbConnection DbConnection
     {
       get
       {
@@ -74,46 +85,12 @@ namespace DaggerNet
       }
     }
 
-    public IDbDataParameter CreateParameter()
-    {
-      return _command.CreateParameter();
-    }
-
-    public int ExecuteNonQuery()
-    {
-      _logger(this.CommandText);
-      return _command.ExecuteNonQuery();
-    }
-
-    public IDataReader ExecuteReader(CommandBehavior behavior)
-    {
-      _logger(this.CommandText);
-      return _command.ExecuteReader(behavior);
-    }
-
-    public IDataReader ExecuteReader()
-    {
-      _logger(this.CommandText);
-      return _command.ExecuteReader();
-    }
-
-    public object ExecuteScalar()
-    {
-      _logger(this.CommandText);
-      return _command.ExecuteScalar();
-    }
-
-    public IDataParameterCollection Parameters
+    protected override DbParameterCollection DbParameterCollection
     {
       get { return _command.Parameters; }
     }
 
-    public void Prepare()
-    {
-      _command.Prepare();
-    }
-
-    public IDbTransaction Transaction
+    protected override DbTransaction DbTransaction
     {
       get
       {
@@ -125,7 +102,42 @@ namespace DaggerNet
       }
     }
 
-    public UpdateRowSource UpdatedRowSource
+    public override bool DesignTimeVisible
+    {
+      get
+      {
+        return _command.DesignTimeVisible;
+      }
+      set
+      {
+        _command.DesignTimeVisible = value;
+      }
+    }
+
+    protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+    {
+      BeforeExecute();
+      return _command.ExecuteReader(behavior);
+    }
+
+    public override int ExecuteNonQuery()
+    {
+      BeforeExecute();
+      return _command.ExecuteNonQuery();
+    }
+
+    public override object ExecuteScalar()
+    {
+      BeforeExecute();
+      return _command.ExecuteScalar();
+    }
+
+    public override void Prepare()
+    {
+      _command.Prepare();
+    }
+
+    public override UpdateRowSource UpdatedRowSource
     {
       get
       {
@@ -135,11 +147,6 @@ namespace DaggerNet
       {
         _command.UpdatedRowSource = value;
       }
-    }
-
-    public void Dispose()
-    {
-      _command.Dispose();
     }
   }
 }

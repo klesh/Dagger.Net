@@ -2,11 +2,14 @@
 using DaggerNet.Attributes;
 using DaggerNet.DOM;
 using DaggerNet.DOM.Abstract;
+using DaggerNet.TypeHandles;
+using Dapper;
 using Emmola.Helpers;
 using Emmola.Helpers.Classes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Net;
 
@@ -46,14 +49,15 @@ namespace DaggerNet
       {
         var table = new Table(type);
 
-        foreach (var property in type.GetReadWriteProperties())
+        var properties = type.GetReadWriteProperties().Where(p => !p.HasAttribute<NotMappedAttribute>());
+        foreach (var property in properties)
         {
           var propertyType = property.PropertyType;
           var isNullable = property.PropertyType.IsNullableType();
           var isSimpleType = property.PropertyType.IsSimpleType();
           var isBinary = property.PropertyType == typeof(byte[]);
 
-          // try to figure many-to-many relationship
+          // try to figure out many-to-many relationship
           if (propertyType.IsEnumerable())
           {
             var elementType = propertyType.GetElementTypeExt();
@@ -72,8 +76,21 @@ namespace DaggerNet
             }
           }
 
+          // try to resolve complex type by convert it to JSON field.
+          if (propertyType.HasAttribute<ComplexTypeAttribute>())
+          {
+            var jsonColumn = new Column(table, property);
+            jsonColumn.DataType = SqlType.Json;
+            SqlMapper.AddTypeHandler(propertyType, new JsonTypeHandler());
+            table.Columns.Add(jsonColumn);
+            continue;
+          }
+
           if (!isSimpleType && !isNullable && !isBinary) 
             continue;
+
+          if (property.Name == "RowVersion" && property.PropertyType != typeof(int) && propertyType != typeof(long))
+            throw new Exception("RowVersion column must be int or long " + type.FullName);
 
 
           var column = new Column(table, property);
@@ -98,10 +115,12 @@ namespace DaggerNet
                 column.DataType = SqlType.Currency;
                 break;
               default:
-                throw new Exception("Unknow DataType:" + dataType.DataType.ToReadable());
+                dataType = null; // ignore unrecognize DataType, fallback to old routine
+                break;
             }
           }
-          else
+
+          if (dataType == null)
           {
             if (propertyType == typeof(string))
             {
@@ -118,7 +137,7 @@ namespace DaggerNet
               column.DataType = SqlType.String;
               column.Precision = new object[] { length };
             }
-            else 
+            else
             {
               var innerType = isNullable ? propertyType.GetNullableValueType() : propertyType;
               if (innerType == typeof(int))
@@ -147,8 +166,12 @@ namespace DaggerNet
                 column.DataType = SqlType.Guid;
               else if (innerType == typeof(Array))
                 column.DataType = SqlType.Array;
+              else if (innerType.IsEnum)
+                column.DataType = SqlType.Int32;
               else
-                throw new Exception("Unknow DataType:" + innerType.ToString());
+                throw new Exception(
+                  "Unknow DataType {0} on {1}.{2}".FormatMe(innerType.ToString(), type.FullName, property.Name)
+                  );
 
               //if (!isNullable)
               //  column.NotNull = true;
@@ -162,6 +185,11 @@ namespace DaggerNet
             column.AutoIncrement = primaryKey.AutoIncrement;
           }
 
+          if (column.DataType == SqlType.DateTime && property.HasAttribute<UpdateTimeAttribute>())
+          {
+            column.UpdateTime = true;
+          }
+
           column.NotNull = !(isNullable || propertyType == typeof(string)) || column.PrimaryKey || property.HasAttribute<RequiredAttribute>();
 
           property.IfAttribute<DefaultAttribute>((da) => column.Default = da.Default);
@@ -173,7 +201,7 @@ namespace DaggerNet
           var indexAttribute = property.GetAttribute<IndexAttribute>();
           if (indexAttribute != null)
           {
-            var indexName = indexAttribute.Name.OrDefault("IX_{0}", property.Name);
+            var indexName = indexAttribute.Name.OrDefault("IX_{0}_{1}", table.Name, property.Name);
             var index = table.Indexes.FindOrAdd(i => i.Name == indexName, () => new Index(table, indexName));
             index.Columns.Add(new IndexColumn(column, indexAttribute.Order, indexAttribute.Descending));
             if (indexAttribute.Unique)
@@ -190,10 +218,17 @@ namespace DaggerNet
             foreignKey.Table = table;
             foreignKey.Columns.Add(new Ordered<Column>(column, referAttribute.Order));
 
-            if (referAttribute.CascadeDelete)
-              foreignKey.CascadeDelete = true;
-            if (referAttribute.CascadeUpdate)
-              foreignKey.CascadeUpdate = true;
+            foreignKey.OnDelete = referAttribute.OnDelete;
+            foreignKey.OnUpdate = referAttribute.OnUpdate;
+
+            // try to find out suitable cacade action
+            if (foreignKey.OnDelete == Cascades.Auto)
+            {
+              if (isNullable)
+                foreignKey.OnDelete = Cascades.SetNull;
+              else
+                foreignKey.OnDelete = Cascades.Cascade;
+            }
           }
         }
 
@@ -204,6 +239,9 @@ namespace DaggerNet
         if (table.Columns.Any(c => c.PrimaryKey))
           table.PrimaryKey = new PrimaryKey(table);
 
+        if (table.Columns.Count(c => c.UpdateTime) > 1)
+          throw new Exception("Multiple UpdateTimeAttribute detected on Type: " + table.Name);
+
         tables.Add(table);
       }
 
@@ -213,11 +251,12 @@ namespace DaggerNet
         // Build up many-to-many tables
         if (table.ManyToMany != null)
         {
+          int p = 0;
           foreach (var oneType in table.ManyToMany)
           {
             var oneTable = tables.First(t => t.Type == oneType);
             var oneFk = new ForeignKey(table, oneType);
-            var i = 0;
+            int i = 0;
             if (oneTable.PrimaryKey == null)
               throw new Exception("Many-To-Many fail due to Type {0} has no primary key".FormatMe(oneType.FullName));
 
@@ -230,10 +269,12 @@ namespace DaggerNet
               oneCol.Precision = pk.Precision;
               oneCol.NotNull = true;
               oneCol.PrimaryKey = true;
+              oneCol.Order = p++;
               table.Columns.Add(oneCol);
 
               oneFk.Columns.Add(new Ordered<Column>(oneCol, i++));
             }
+            oneFk.OnDelete = Cascades.Cascade;
             table.ForeignKeys.Add(oneFk);
             table.Name += oneType.Name;
           }
@@ -260,8 +301,12 @@ namespace DaggerNet
             ));
 
           foreignKey.ReferTable = refTable;
-          foreignKey.Name = "FK_" + foreignKey.Columns.Select(c => c.Value.Name).Implode("_");
+          foreignKey.Name = "FK_" + table.Name + "_" + foreignKey.Columns.Select(c => c.Value.Name).Implode("_");
           foreignKey.ReferColumns = refKeys;
+
+          if (foreignKey.OnUpdate == Cascades.Auto &&
+              (refKeys.Count() != 1 || refKeys.First().AutoIncrement == false))
+            foreignKey.OnUpdate = Cascades.Cascade;
         }
       }
 

@@ -25,16 +25,31 @@ namespace DaggerNet.Attributes
     /// <summary>
     /// on delete cascade
     /// </summary>
-    public bool CascadeDelete { get; set; }
+    public Cascades OnDelete { get; set; }
 
     /// <summary>
     /// On update cascade
     /// </summary>
-    public bool CascadeUpdate { get; set; }
+    public Cascades OnUpdate { get; set; }
+
+    /// <summary>
+    /// on delete 
+    /// </summary>
+    public bool SetNull { get; set; }
 
     /// <summary>
     /// For composite primary key
     /// </summary>
     public int Order { get; set; }
+  }
+
+  public enum Cascades
+  {
+    Auto,
+    NoAction,
+    Cascade,
+    Restrict,
+    SetNull,
+    SetDefault
   }
 }

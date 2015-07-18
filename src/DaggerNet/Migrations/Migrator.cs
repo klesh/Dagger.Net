@@ -1,13 +1,6 @@
-﻿using DaggerNet.DOM;
+﻿using Emmola.Helpers;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Emmola.Helpers;
-using System.Reflection;
 
 namespace DaggerNet.Migrations
 {
@@ -18,14 +11,25 @@ namespace DaggerNet.Migrations
   {
     private object _locker = new object();
     private Migration[] _migrations = null;
-    private DbServer _dbServer;
+    private DataFactory _factory;
 
-    public Migrator(DbServer dbServer)
+    /// <summary>
+    /// Migrator must bind to a DataFactory
+    /// That we can search all migrations for this DataFactory and Run migrations.
+    /// </summary>
+    /// <param name="dataFactory"></param>
+    public Migrator(DataFactory dataFactory)
     {
-      _dbServer = dbServer;
+      if (dataFactory == null)
+        throw new ArgumentNullException("dataFactory can not be null");
+
+      _factory = dataFactory;
     }
 
-    protected Migration[] Migrations
+    /// <summary>
+    /// Get all pending migration in assembly
+    /// </summary>
+    public Migration[] Migrations
     {
       get
       {
@@ -35,10 +39,12 @@ namespace DaggerNet.Migrations
           {
             if (_migrations == null)
             {
-              // load all migrations base on DbServer's assembly
+              var factoryType = _factory.GetType();
+              // load all migrations of dataModel's assembly
               _migrations = typeof(Migration)
-                .FindSubTypesIn(_dbServer.GetType().Assembly)
+                .FindSubTypesIn(_factory.GetType().Assembly)
                 .Select(t => (Migration)Activator.CreateInstance(t))
+                .Where(i => i.DataFactoryType == factoryType)
                 .ToArray();
             }
           }
@@ -47,12 +53,32 @@ namespace DaggerNet.Migrations
       }
     }
 
-    public void Execute(Dagger dagger)
+    /// <summary>
+    /// Run all pending migrations on Database base on Id
+    /// </summary>
+    /// <param name="dagger"></param>
+    public void Execute(DataBase database)
     {
-      var lastDatabaseMigration = dagger.From<MigrationHistory>(s => s.OrderByDescending(mh => mh.Id).Limit(1)).First();
-      var pendingMigrations = Migrations.Where(m => m.Id > lastDatabaseMigration.Id);
-      foreach (var pendingMigration in pendingMigrations)
-        pendingMigration.Execute(dagger);
+      using (var dagger = database.Draw())
+      {
+        var lastDatabaseMigration = dagger.From<MigrationHistory>(s => s.OrderByDescending(mh => mh.Id).Limit(1)).FirstOrDefault();
+        var pendingMigrations = Migrations.Where(m => m.Id > lastDatabaseMigration.Id).OrderBy(m => m.Id);
+        if (pendingMigrations.Any())
+        {
+          var modelBinary = ObjectHelper.ToBinary(database.Model.Tables);
+          foreach (var pendingMigration in pendingMigrations)
+          {
+            pendingMigration.Execute(dagger);
+            var migrationHistory = new MigrationHistory
+            {
+              Id = pendingMigration.Id,
+              Title = pendingMigration.Title,
+              Model = modelBinary
+            };
+            dagger.Insert<MigrationHistory>(migrationHistory);
+          }
+        }
+      }
     }
   }
 }

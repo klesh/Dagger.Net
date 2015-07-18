@@ -16,6 +16,21 @@
     <ReferencePath>$(ProgramFiles)\Common Files\microsoft shared\VSTT\$(VisualStudioVersion)\UITestExtensionPackages</ReferencePath>
     <IsCodedUITest>False</IsCodedUITest>
     <TestProjectType>UnitTest</TestProjectType>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -29,33 +44,35 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Dagger.Net\nuget\tools\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapper">
+    <Reference Include="Dapper, Version=1.40.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Dapper.1.42\lib\net45\Dapper.dll</HintPath>
-    </Reference>
-    <Reference Include="Emmola.Helpers, Version=1.0.0.2, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\Emmola.Helpers.1.0.0.2\lib\Emmola.Helpers.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Mono.Security">
       <HintPath>..\..\packages\Npgsql.2.2.5\lib\net45\Mono.Security.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="Npgsql">
       <HintPath>..\..\packages\Npgsql.2.2.5\lib\net45\Npgsql.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Text, Version=4.0.40.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\Emmola\packages\ServiceStack.Text.4.0.40\lib\net40\ServiceStack.Text.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Should, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Should.1.1.20\lib\Should.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Transactions" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -70,26 +87,23 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="DataServer.cs" />
-    <Compile Include="MigrationModels\v1\Post.cs" />
-    <Compile Include="MigrationModels\v2\Blog.cs" />
-    <Compile Include="MigrationModels\v2\Entity.cs" />
-    <Compile Include="MigrationModels\v2\Post.cs" />
-    <Compile Include="MigrationModels\v3\Blog.cs" />
-    <Compile Include="MigrationModels\v3\Entity.cs" />
-    <Compile Include="MigrationModels\v3\Post.cs" />
-    <Compile Include="MigrationModels\v3\User.cs" />
+    <Compile Include="DataFactoryTest.cs" />
+    <Compile Include="DomTest.cs" />
+    <Compile Include="Migrations\20150715110548_MockMigration.cs" />
+    <Compile Include="Models\v1\Post.cs" />
+    <Compile Include="Models\v2\Blog.cs" />
+    <Compile Include="Models\v2\Entity.cs" />
+    <Compile Include="Models\v2\Post.cs" />
+    <Compile Include="Models\v3\Blog.cs" />
+    <Compile Include="Models\v3\Entity.cs" />
+    <Compile Include="Models\v3\Post.cs" />
+    <Compile Include="Models\v3\User.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\Entity.cs" />
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\Product.cs" />
     <Compile Include="Models\Property.cs" />
-    <Compile Include="DbServerTest.cs" />
-    <Compile Include="RenameModels\Category.cs" />
-    <Compile Include="RenameModels\Entity.cs" />
-    <Compile Include="RenameModels\Sku.cs" />
-    <Compile Include="RenameModels\Product.cs" />
-    <Compile Include="RenameModels\Property.cs" />
+    <Compile Include="DataServerTest.cs" />
     <Compile Include="SqlBuilderTest.cs" />
     <Compile Include="MigrationTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -101,14 +115,44 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DaggerNet.PostgresSQL\DaggerNet.PostgresSQL.csproj">
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Emmola.Helpers\src\Emmola.Helpers\Emmola.Helpers.csproj">
+      <Project>{85376ecc-d02f-4bc8-b60a-ab5b6e5418e9}</Project>
+      <Name>Emmola.Helpers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DaggerNet.Postgres\DaggerNet.Postgres.csproj">
       <Project>{022a65f4-67a9-47ee-aeca-fa715d23d58e}</Project>
-      <Name>DaggerNet.PostgresSQL</Name>
+      <Name>DaggerNet.Postgres</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DaggerNet.PowerShell\DaggerNet.PowerShell.csproj">
+      <Project>{a7218ba1-cb12-4851-b717-f509da9299eb}</Project>
+      <Name>DaggerNet.PowerShell</Name>
     </ProjectReference>
     <ProjectReference Include="..\DaggerNet\DaggerNet.csproj">
       <Project>{2e2ba7d3-c770-4aef-9ee2-d22f9e983bea}</Project>
       <Name>DaggerNet</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\20150715110548_MockMigration.sql">
+      <DependentUpon>20150715110548_MockMigration.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

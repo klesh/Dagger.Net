@@ -19,6 +19,7 @@ namespace DaggerNet.Migrations
     }
 
     public MigrationHistory(byte[] modelBytes)
+      : this()
     {
       // TODO: Complete member initialization
       Id = Migration.GenerateId();

@@ -33,14 +33,12 @@ namespace DaggerNet.Linq
 
     public override string ToString()
     {
-      ;
-
       var builder = new StringBuilder(Parent.ToString());
       if (Parent is IOrderedQueryBuilder)
         builder.AppendSpaced(",");
       else
         builder.AppendSpaced("ORDER BY");
-      builder.AppendSpaced(ConvertProperty(Lambda.Body));
+      builder.AppendSpaced(Convert(Lambda.Body));
       if (_descending)
         builder.AppendSpaced("DESC");
       return builder.ToString();

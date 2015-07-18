@@ -30,7 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapper">
+    <Reference Include="Dapper, Version=1.40.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Dapper.1.42\lib\net45\Dapper.dll</HintPath>
     </Reference>
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -51,9 +52,14 @@
     <Compile Include="EnvDTEHelper.cs" />
     <Compile Include="MigrateCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Resource Include="Templates\Migration.cs" />
+    <EmbeddedResource Include="Templates\Migration.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="nuget\DaggerPS.nuspec">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="nuget\tools\DaggerNet.psm1" />
+    <None Include="nuget\tools\Init.ps1" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -66,9 +72,11 @@
       <Name>DaggerNet</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) $(SolutionDir)src\DaggerNet\nuget\tools\ /Y</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

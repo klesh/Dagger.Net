@@ -65,15 +65,15 @@ namespace DaggerNet.Linq
         throw new Exception("Foreign can not be found: {0} {1}".FormatMe(leftTable.Name, rightTable.Name));
 
       return " JOIN {0} AS {1} ON ({2})".FormatMe(
-        Server.Generator.QuoteTable(rightTable),
+        Sql.QuoteTable(rightTable),
         rightAlias,
         foreignKey.Columns.Select((c, i) =>
         {
           var cl = c.Value;
           var cr = foreignKey.ReferColumns[i];
           return "{0}.{1} = {2}.{3}".FormatMe(
-            leftFK, Server.Generator.QuoteColumn(cl),
-            rightFk, Server.Generator.QuoteColumn(cr));
+            leftFK, Sql.QuoteColumn(cl),
+            rightFk, Sql.QuoteColumn(cr));
         }).Implode(", ")
       );
     }
@@ -82,12 +82,12 @@ namespace DaggerNet.Linq
     {
       var sql = "";
 
-      var tableLeft = Server.GetTable(Type);
-      var tableRight = Server.GetTable(JoinType);
+      var tableLeft = Model.GetTable(Type);
+      var tableRight = Model.GetTable(JoinType);
       var foreignKey = tableLeft.ForeignKeys.FirstOrDefault(fk => fk.ReferTable == tableRight);
       if (foreignKey == null)
       {
-        var tableMiddle = Server.GetTable(Type, JoinType);
+        var tableMiddle = Model.GetTable(Type, JoinType);
         var middleAlias = AliasLeft + AliasRight;
         sql += BuildJoin(tableLeft, tableMiddle, AliasLeft, middleAlias);
         sql += BuildJoin(tableMiddle, tableRight, middleAlias, AliasRight);

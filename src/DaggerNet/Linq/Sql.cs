@@ -9,7 +9,7 @@ namespace DaggerNet.Linq
   /// <summary>
   /// Sql helper to do function and formation
   /// </summary>
-  public class Sql
+  public class SqlFunctions
   {
     public readonly static string[] LIKE_METHODS = new string[] { "Contains", "StartsWith", "EndsWith" };
 

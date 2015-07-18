@@ -1,14 +1,11 @@
 ﻿using DaggerNet.Attributes;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
-namespace DaggerNetTest.Models
+namespace DaggerNet.Tests.Models
 {
   public class Category : Entity
   {
-    [Reference]
+    [Reference(OnDelete = Cascades.Cascade)]
     public long? ParentId { get; set; }
 
     public HashSet<Category> Children { get; set; }

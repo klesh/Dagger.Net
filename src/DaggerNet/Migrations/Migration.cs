@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Emmola.Helpers;
-using System.Reflection;
-using Emmola.Helpers;
-using System.IO;
-using DaggerNet.Abstract;
+﻿using DaggerNet.Abstract;
 using Dapper;
+using Emmola.Helpers;
+using System;
 
 namespace DaggerNet.Migrations
 {
@@ -23,24 +16,53 @@ namespace DaggerNet.Migrations
     {
     }
 
+    /// <summary>
+    /// Indicate migration belong to which concreate DataFactory
+    /// </summary>
+    public abstract Type DataFactoryType { get; }
+
+    /// <summary>
+    /// Migration version
+    /// </summary>
     public abstract long Id { get;  }
 
+    /// <summary>
+    /// Readable title
+    /// </summary>
     public string Title { get { return this.GetType().Name; } }
 
-    public virtual void RunCreationScript(Dagger dagger, string sql)
+    /// <summary>
+    /// Run creation script
+    /// </summary>
+    /// <param name="dagger"></param>
+    /// <param name="sql"></param>
+    protected virtual void RunCreationScript(Dagger dagger, string sql)
     {
-      dagger.Execute(sql);
+      dagger.ExecuteNonQuery(sql);
     }
 
-    public virtual void RunConvertion(Dagger dagger)
+    /// <summary>
+    /// Between creation and deletion, we can do programatic convertion here
+    /// </summary>
+    /// <param name="dagger"></param>
+    protected virtual void RunConvertion(Dagger dagger)
     {
     }
 
-    public virtual void RunDeletionScript(Dagger dagger, string sql)
+    /// <summary>
+    /// Run deletion script
+    /// </summary>
+    /// <param name="dagger"></param>
+    /// <param name="sql"></param>
+    protected virtual void RunDeletionScript(Dagger dagger, string sql)
     {
-      dagger.Execute(sql);
+      dagger.ExecuteNonQuery(sql);
     }
 
+    /// <summary>
+    /// Run migration
+    /// </summary>
+    /// <param name="dagger"></param>
     public void Execute(Dagger dagger)
     {
       if (_flag == false)
@@ -49,9 +71,7 @@ namespace DaggerNet.Migrations
         {
           if (_flag == false)
           {
-            var name = "{0}.{1}.sql".FormatMe(this.GetType().Namespace, this.ToString());
-            var sqlScript = Assembly.GetExecutingAssembly().GetResourceText(name);
-            var parts = sqlScript.Split(new string[] { SqlGenerator.DELETION_SEPARATOR }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = GetSqlScripts();
             _creation = parts[0].Trim();
             _deletion = parts[1].Trim();
             _flag = true;
@@ -64,16 +84,20 @@ namespace DaggerNet.Migrations
       RunDeletionScript(dagger, _deletion);
     }
 
+    public string[] GetSqlScripts()
+    {
+      var sqlScript = this.GetType().Assembly.GetResourceText(GetSqlName());
+      return sqlScript.Split(new string[] { SqlGenerator.DELETION_SEPARATOR }, StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    public string GetSqlName()
+    {
+      return "{0}.{1}".FormatMe(this.GetType().Namespace, this.Title);
+    }
+
     public static long GenerateId()
     {
       return long.Parse(DateTime.Now.ToString("yyyyMMddHHmmss"));
-    }
-
-    protected long _migartionId_ { get { throw new Exception("Place hold property shouldn't be called"); } }
-
-    public override string ToString()
-    {
-      return "{0}_{1}".FormatMe(Id, Title);
     }
   }
 }

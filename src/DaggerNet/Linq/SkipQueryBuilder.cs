@@ -21,12 +21,12 @@ namespace DaggerNet.Linq
 
     public string Limit(int limit)
     {
-      return _parent.Server.Generator.MakeLimitSql(this.ToString(), limit);
+      return _parent.Sql.MakeLimitSql(this.ToString(), limit);
     }
 
     public override string ToString()
     {
-      return _parent.Server.Generator.MakeSkipSql(_parent.ToString(), _skip);
+      return _parent.Sql.MakeSkipSql(_parent.ToString(), _skip);
     }
   }
 }

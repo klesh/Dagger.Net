@@ -1,86 +1,94 @@
-﻿using DaggerNet;
-using DaggerNet.DOM.Abstract;
-using DaggerNet.PostgresSQL;
+﻿using DaggerNet.Abstract;
+using DaggerNet.Postgres;
 using Emmola.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DaggerNetTest.Models;
 using System;
 using System.Linq;
-using v1 = DaggerNetTest.MigrationModels.v1;
-using v2 = DaggerNetTest.MigrationModels.v2;
-using v3 = DaggerNetTest.MigrationModels.v3;
+using v1 = DaggerNet.Tests.Models.v1;
+using v2 = DaggerNet.Tests.Models.v2;
+using v3 = DaggerNet.Tests.Models.v3;
+using Should;
+using DaggerNet.Tests.Migrations;
 
-namespace DaggerNetTest
+namespace DaggerNet.Tests
 {
   [TestClass]
   public class MigrationTest
   {
-    [TestMethod]
-    public void CreateDomFromTypes()
-    {
-      var c2d = new Class2Dom(typeof(Entity).FindSubTypesInMe());
-      var dom = c2d.Produce();
-      var category = dom.First(t => t.Name == "Category");
-      var pks = category.PrimaryKey.Columns;
-
-      var generator = new PostgreSQLGenerator();
-      Console.WriteLine(generator.CreateTables(dom));
-
-      Assert.AreEqual(1, pks.Count);
-      Assert.AreEqual(1, category.ForeignKeys.Count);
-
-      var pk = pks.First().Value;
-      Assert.AreEqual("Id", pk.Name);
-      Assert.AreEqual(SqlType.Int64, pk.DataType);
-      Assert.IsTrue(pk.NotNull);
-      Assert.IsTrue(pk.AutoIncrement);
-
-      var productProperties = dom.FirstOrDefault(t => t.Name == "ProductProperty");
-      Assert.IsNotNull(productProperties, "Many to Many table missed");
-      Assert.AreEqual(2, productProperties.Columns.Count);
-      Assert.AreEqual(2, productProperties.PrimaryKey.Columns.Count);
-      Assert.AreEqual(2, productProperties.ForeignKeys.Count);
-    }
-
-    [TestMethod]
-    public void DomDiffTest()
-    {
-      var dom1 = new Class2Dom(typeof(v1.Post)).Produce();
-      var dom2 = new Class2Dom(typeof(v2.Entity).FindSubTypesInMe()).Produce();
-      var dom3 = new Class2Dom(typeof(v3.Entity).FindSubTypesInMe()).Produce();
-
-      var diff = dom1.Diff(dom2);
-      Assert.AreEqual(1, diff.Creation.Count());
-      Assert.AreEqual(1, diff.Comparison.Count);
-      Assert.AreEqual(0, diff.Deletion.Count());
-
-      var diff2 = dom2.Diff(dom1);
-      Assert.AreEqual(0, diff2.Creation.Count());
-      Assert.AreEqual(1, diff2.Comparison.Count);
-      Assert.AreEqual(1, diff2.Deletion.Count());
-
-      var diff3 = dom2.Diff(dom3);
-      Assert.AreEqual(1, diff3.Creation.Count());
-      Assert.AreEqual(0, diff3.Comparison.Count);
-      Assert.AreEqual(0, diff3.Deletion.Count());
-
-      var diff4 = dom3.Diff(dom2);
-      Assert.AreEqual(0, diff4.Creation.Count());
-      Assert.AreEqual(0, diff4.Comparison.Count);
-      Assert.AreEqual(1, diff4.Deletion.Count());
-    }
-
+    /// <summary>
+    /// Make sure SQL SCRIPT come out as expected
+    /// </summary>
     [TestMethod]
     public void MigrationScriptTest()
     {
-      var dom1 = new Class2Dom(typeof(v1.Post)).Produce();
+      //var dom1 = new Class2Dom(typeof(v1.Post)).Produce();
       var dom2 = new Class2Dom(typeof(v2.Entity).FindSubTypesInMe()).Produce();
       var dom3 = new Class2Dom(typeof(v3.Entity).FindSubTypesInMe()).Produce();
 
-      var generator = new PostgreSQLGenerator();
+      var generator = new PostgresGenerator();
 
       //Console.WriteLine(generator.CreateMigration(dom1, dom2));
-      Console.WriteLine(generator.CreateMigration(dom3, dom2));
+      var scripts = generator.CreateMigration(dom3, dom2).Split(new string[] { SqlGenerator.DELETION_SEPARATOR }, StringSplitOptions.None);
+      var creation_part = scripts[0].Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+      var deletion_part = scripts[1].Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+
+      Assert.AreEqual(3, creation_part.Length);
+      Assert.IsTrue(creation_part.Contains("ALTER TABLE \"Posts\" ALTER COLUMN \"Title\" SET DEFAULT test;"));
+      Assert.IsTrue(creation_part.Contains("ALTER TABLE \"Posts\" RENAME COLUMN \"Content1\" TO \"Content\";"));
+      Assert.IsTrue(creation_part.Contains("ALTER INDEX \"IX_Post_Content1\" RENAME TO \"IX_Post_Content\";"));
+
+      Assert.AreEqual(2, deletion_part.Length);
+      Assert.IsTrue(deletion_part.Contains("ALTER TABLE \"Posts\" DROP COLUMN \"CreatedAt\";"));
+      Assert.IsTrue(deletion_part.Contains("DROP TABLE \"Users\";"));
+    }
+
+    [TestMethod]
+    public void MigrateTest()
+    {
+      var dom1 = new Class2Dom(typeof(v1.Post)).Produce();
+      var dom2 = new Class2Dom(typeof(v2.Entity).FindSubTypesInMe()).Produce();
+
+      var postgresServer = new PostgresServer();
+      postgresServer.ConnectionStringFormat = DataServerTest.ConnectionStringFormat;
+      var initialScript = postgresServer.Sql.CreateTables(dom1);
+      var migrationScript = postgresServer.Sql.CreateMigration(dom1, dom2);
+      Console.WriteLine("Initial Script:");
+      Console.WriteLine(initialScript);
+
+      Console.WriteLine("**************************************************************");
+      Console.WriteLine("Migration Scripts:");
+      Console.WriteLine(migrationScript);
+
+
+      postgresServer.ReCreate("DaggerMigrate");
+
+      using (var cnt = postgresServer.Open("DaggerMigrate"))
+      {
+        var cmd = cnt.CreateCommand();
+        cmd.CommandText = initialScript;
+        cmd.ExecuteNonQuery();
+
+        cmd.CommandText = "select count(*) from information_schema.tables where table_schema='public';";
+        cmd.ExecuteScalar()
+          .ShouldEqual(1L);
+
+        cmd.CommandText = migrationScript;
+        cmd.ExecuteNonQuery();
+
+        cmd.CommandText = "select count(*) from information_schema.tables where table_schema='public';";
+        cmd.ExecuteScalar()
+          .ShouldEqual(2L);
+      }
+    }
+
+    [TestMethod]
+    public void MockMigrationTest()
+    {
+      var mockMigration = new MockMigration();
+      Console.WriteLine(mockMigration.GetSqlName());
+      var parts = mockMigration.GetSqlScripts();
+      Console.WriteLine(parts[0]);
+      Console.WriteLine(parts[1]);
     }
   }
 }

@@ -1,13 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 namespace DaggerNet.Attributes
 {
   [AttributeUsage(AttributeTargets.Property)]
   public class IndexAttribute : Attribute
   {
+    public IndexAttribute()
+    {
+    }
+
+    public IndexAttribute(string name)
+    {
+      Name = name;
+    }
+
     public string Name { get; set; }
 
     public int Order { get; set; }

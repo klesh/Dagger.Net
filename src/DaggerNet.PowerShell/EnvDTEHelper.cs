@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell.Interop;
 using Emmola.Helpers;
+using System.Text;
 
 namespace DaggerNet.PowerShell
 {
@@ -48,7 +49,7 @@ namespace DaggerNet.PowerShell
                 ? "Bin"
                 : project.GetConfigurationPropertyValue<string>("OutputPath");
 
-      return Path.Combine(fullPath, outputPath, project.GetTargetName() + (isWeb ? ".dll" : ".exe"));
+      return Path.Combine(fullPath, outputPath, project.GetPropertyValue<string>("OutputFileName"));
     }
 
     // <summary>
@@ -121,7 +122,7 @@ namespace DaggerNet.PowerShell
       }
     }
 
-    public static void AddFile(this Project project, string path, string contents)
+    public static ProjectItem AddFile(this Project project, string path, string contents)
     {
       Debug.Assert(!Path.IsPathRooted(path));
 
@@ -131,10 +132,10 @@ namespace DaggerNet.PowerShell
       Directory.CreateDirectory(Path.GetDirectoryName(absolutePath));
       File.WriteAllText(absolutePath, contents);
 
-      project.AddFile(path);
+      return project.AddFile(path);
     }
 
-    public static void AddFile(this Project project, string path)
+    public static ProjectItem AddFile(this Project project, string path)
     {
       Debug.Assert(!Path.IsPathRooted(path));
 
@@ -170,25 +171,19 @@ namespace DaggerNet.PowerShell
 
       try
       {
-        projectItems.Item(fileName);
+        return projectItems.Item(fileName);
       }
       catch
       {
-        projectItems.AddFromFileCopy(absolutePath);
+        return projectItems.AddFromFileCopy(absolutePath);
       }
     }
 
-    public static void AddSubResource(this Project project, string parentPath, string path, string contents)
+    public static void AddSubResource(this Project project, ProjectItem parent, string path, string contents)
     {
-      project.AddFile(path, contents);
-      foreach (ProjectItem item in project.ProjectItems)
-      {
-        if (item.Properties.Item("FullPath").Value == parentPath)
-        {
-          item.ProjectItems.AddFromFile(path).Properties.Item("ItemType").Value = "Resource";
-          return;
-        }
-      }
+      var sqlFile = project.AddFile(path, contents);
+      sqlFile.Properties.Item("ItemType").Value = "EmbeddedResource";
+      parent.ProjectItems.AddFromFile(sqlFile.Properties.Item("FullPath").Value.ToString());
     }
 
     public static bool TryBuild(this Project project)
@@ -201,7 +196,7 @@ namespace DaggerNet.PowerShell
       return dte.Solution.SolutionBuild.LastBuildInfo == 0;
     }
 
-    private static T GetPropertyValue<T>(this Project project, string propertyName)
+    public static T GetPropertyValue<T>(this Project project, string propertyName)
     {
       var property = project.Properties.Item(propertyName);
 
@@ -266,6 +261,11 @@ namespace DaggerNet.PowerShell
       }
 
       return projectTypeGuidsString.Split(';');
+    }
+
+    public static void OpenFile(this Project project, string filePath)
+    {
+      project.DTE.ItemOperations.OpenFile(filePath);
     }
   }
 }

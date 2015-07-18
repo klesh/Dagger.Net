@@ -1,4 +1,5 @@
-﻿using DaggerNet.DOM;
+﻿using DaggerNet.Attributes;
+using DaggerNet.DOM;
 using DaggerNet.Migrations;
 using Emmola.Helpers;
 using Inflector;
@@ -23,6 +24,25 @@ namespace DaggerNet.Abstract
     public abstract string DefaultDatabase { get; }
 
     /// <summary>
+    /// Return default schema
+    /// </summary>
+    public abstract string DefaultSchema { get; }
+
+    /// <summary>
+    /// Return all system database names except DefaultDatabase
+    /// </summary>
+    public abstract string[] SystemDatabases { get; }
+
+    /// <summary>
+    /// Return check table existing sql script
+    /// </summary>
+    /// <returns></returns>
+    public virtual string GetTableExistsSql()
+    {
+      return "SELECT EXISTS(SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = @Schema AND  TABLE_NAME = @Table)";
+    }
+
+    /// <summary>
     /// return a CREATE DATABASE script 
     /// </summary>
     /// <param name="dbname">name of database to be created</param>
@@ -41,6 +61,14 @@ namespace DaggerNet.Abstract
     {
       return "DROP DATABASE {0}".FormatMe(Quote(dbname));
     }
+
+    /// <summary>
+    /// Return database size in bytes
+    /// </summary>
+    /// <param name="name">database name</param>
+    /// <returns>database size in bytes</returns>
+    public abstract long GetDatabaseSize(string name);
+
 
     /// <summary>
     /// return sql script to set database in Single User Model
@@ -118,8 +146,11 @@ namespace DaggerNet.Abstract
             colPair.Key.NewName = colPair.Value.Name;
           }
 
-          if (colPair.Key.CalculateSimilarity(colPair.Value) < 1f)
-            Begin().ChangeColumn(colPair.Value).End();
+          if (colPair.Key.DataType != colPair.Value.DataType)
+            Begin().ChangeColumnType(colPair.Value).End();
+
+          if (colPair.Key.Default != colPair.Value.Default)
+            Begin().ChangeColumnDefault(colPair.Value).End();
         }
 
         colDeletion.AddRange(columnDiff.Deletion);
@@ -299,7 +330,7 @@ namespace DaggerNet.Abstract
     /// <param name="column">new column to add</param>
     public virtual SqlGenerator AddColumn(Column column)
     {
-      _builder.AppendFormat("ALTER TABLE {0} ADD COLUMN {1}", QuoteTable(column.Table));
+      _builder.AppendFormat("ALTER TABLE {0} ADD COLUMN ", QuoteTable(column.Table));
       CreateColumn(column);
       return this;
     }
@@ -329,10 +360,24 @@ namespace DaggerNet.Abstract
     /// Generate change column definition script
     /// </summary>
     /// <param name="column">Column to be changed</param>
-    public virtual SqlGenerator ChangeColumn(Column column)
+    public virtual SqlGenerator ChangeColumnType(Column column)
     {
-      _builder.AppendFormat("ALTER TABLE {0} ALTER COLUMN {1}", QuoteTable(column.Table));
-      CreateColumn(column);
+      _builder.AppendFormat("ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}", 
+        QuoteTable(column.Table), 
+        MapType(column));
+      return this;
+    }
+
+    /// <summary>
+    /// Generate change column definition script
+    /// </summary>
+    /// <param name="column">Column to be changed</param>
+    public virtual SqlGenerator ChangeColumnDefault(Column column)
+    {
+      _builder.AppendFormat("ALTER TABLE {0} ALTER COLUMN {1} {2}",
+        QuoteTable(column.Table),
+        QuoteColumn(column),
+        column.Default.IsValid() ? "SET DEFAULT " + column.Default : "DROP DEFAULT");
       return this;
     }
 
@@ -392,6 +437,15 @@ namespace DaggerNet.Abstract
         QuoteTable(foreignKey.ReferTable),
         foreignKey.ReferColumns.Select(c => QuoteColumn(c)).Implode(", ")
         );
+
+      var onDelete = MapCascade(foreignKey.OnDelete);
+      if (onDelete.IsValid())
+        _builder.AppendSpaced("ON DELETE").AppendSpaced(onDelete);
+
+      var onUpdate = MapCascade(foreignKey.OnUpdate);
+      if (onUpdate.IsValid())
+        _builder.AppendSpaced("ON UPDATE").AppendSpaced(onUpdate);
+      
       return this;
     }
 
@@ -402,7 +456,12 @@ namespace DaggerNet.Abstract
     /// <returns>Quoted table name</returns>
     public virtual string QuoteTable(Table table)
     {
-      return Quote(table.Name.Pluralize());
+      return Quote(ConvertTableName(table));
+    }
+
+    public virtual string ConvertTableName(Table table)
+    {
+      return table.Name.Pluralize();
     }
 
     /// <summary>
@@ -428,6 +487,22 @@ namespace DaggerNet.Abstract
     /// <param name="column">Column DOM</param>
     /// <returns>string</returns>
     public abstract string MapType(Column column);
+
+    /// <summary>
+    /// Return ON DELETE/ON UPDATE cascade statement
+    /// </summary>
+    /// <param name="cascade"></param>
+    /// <returns></returns>
+    public virtual string MapCascade(Cascades cascade)
+    {
+      switch (cascade)
+      {
+        case Cascades.SetNull: return "SET NULL";
+        case Cascades.SetDefault: return "SET DEFAULT";
+        case Cascades.Cascade: return "CASCADE";
+        default: return null;
+      }
+    }
 
     /// <summary>
     /// Output scripts

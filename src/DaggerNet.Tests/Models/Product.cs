@@ -1,11 +1,8 @@
 ﻿using DaggerNet.Attributes;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Web;
 
-namespace DaggerNetTest.Models
+namespace DaggerNet.Tests.Models
 {
   public class Product : Entity
   {
@@ -26,5 +23,13 @@ namespace DaggerNetTest.Models
     public HashSet<Item> Items { get; set; }
 
     public HashSet<Property> Properties { get; set; }
+
+    public long Stock { get; set; }
+  }
+
+  public class ProductDto
+  {
+    public string Id { get; set; }
+    public string ModelNo { get; set; }
   }
 }

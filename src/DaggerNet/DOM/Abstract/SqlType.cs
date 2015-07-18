@@ -139,7 +139,9 @@ namespace DaggerNet.DOM.Abstract
     Text = 28,
 
     TimeSpan = 29,
-    IPAddress,
-    Array
+    IPAddress = 30,
+    Array = 31,
+    Json = 32,
+    Enum = 33
   }
 }

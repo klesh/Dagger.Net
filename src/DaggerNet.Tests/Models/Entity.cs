@@ -1,10 +1,7 @@
 ﻿using DaggerNet.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
-namespace DaggerNetTest.Models
+namespace DaggerNet.Tests.Models
 {
   public abstract class Entity
   {
@@ -14,9 +11,9 @@ namespace DaggerNetTest.Models
     public string Title { get; set; }
 
     [Default("CURRENT_TIMESTAMP")]
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     [UpdateTime]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
   }
 }

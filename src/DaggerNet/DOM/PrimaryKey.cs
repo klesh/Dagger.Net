@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace DaggerNet.DOM
 {
+  [Serializable]
   public class PrimaryKey : TableRes
   {
     protected PrimaryKey()

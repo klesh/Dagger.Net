@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using System.Collections.Generic;
 
-namespace DaggerNetTest.Models
+namespace DaggerNet.Tests.Models
 {
   public class Property : Entity
   {

@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>DaggerNet</id>
+    <version>1.0.0.0</version>
+    <authors>Klesh Wong</authors>
+    <owners>Klesh Wong</owners>
+    <licenseUrl>https://github.com/klesh/Dagger.Net/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/klesh/Dagger.Net</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An "dapper dot net" enhancement. Provide Database Server basis management, migration, Linq style sql query builder.</description>
+    <tags>Dapper ORM Micro-ORM Linq Sql Migration</tags>
+    <dependencies>
+      <dependency id="ServiceStack.Text" version="4.0.40" />
+      <dependency id="Dapper" version="1.42" />
+      <dependency id="Emmola.Helpers" version="1.0.0.3" />
+      <dependency id="Inflector" version="1.0.0.0" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.ComponentModel.DataAnnotations" targetFramework="net40" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework="net40" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="..\bin\Release\DaggerNet.dll" target="lib" />
+    <file src="..\..\DaggerNet.PowerShell\bin\Release\DaggerNet.PowerShell.dll" target="tools" />
+    <file src="..\..\DaggerNet.PowerShell\nuget\tools\Init.ps1" target="tools" />
+    <file src="..\..\DaggerNet.PowerShell\nuget\tools\DaggerNet.psm1" target="tools" />
+  </files>
+</package>

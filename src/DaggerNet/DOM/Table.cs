@@ -10,6 +10,11 @@ namespace DaggerNet.DOM
   [Serializable]
   public class Table : Base, ISimilarity<Table>
   {
+    [NonSerialized]
+    private Type _type;
+    [NonSerialized]
+    private Type[] _m2m;
+
     public Table()
     {
       Columns = new HashSet<Column>();
@@ -27,7 +32,7 @@ namespace DaggerNet.DOM
       : this()
     {
       // TODO: Complete member initialization
-      this.Type = type;
+      _type = type;
       this.Name = type.Name;
     }
 
@@ -38,18 +43,18 @@ namespace DaggerNet.DOM
     public Table(Type[] m2m)
       :this()
     {
-      ManyToMany = m2m;
+      _m2m = m2m;
     }
 
     /// <summary>
     /// Rlative type
     /// </summary>
-    internal Type Type { get; private set; }
+    internal Type Type { get { return _type; } }
 
     /// <summary>
     /// As in many-to-many
     /// </summary>
-    internal Type[] ManyToMany { get; private set; }
+    internal Type[] ManyToMany { get { return _m2m; } }
 
     /// <summary>
     /// We have an auto incremental id column in most case.

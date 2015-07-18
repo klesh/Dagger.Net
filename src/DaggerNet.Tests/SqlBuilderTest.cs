@@ -1,169 +1,187 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using Emmola.Helpers;
-using DaggerNetTest.Models;
-using DaggerNet.PostgresSQL;
-using DaggerNet;
+﻿using DaggerNet.Abstract;
 using DaggerNet.Linq;
+using DaggerNet.Migrations;
+using DaggerNet.Postgres;
+using DaggerNet.Tests.Models;
+using Emmola.Helpers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
+using Should;
 
-namespace DaggerNetTest
+namespace DaggerNet.Tests
 {
   [TestClass]
   public class SqlBuilderTest
   {
-    DbServer dbServer;
+    DataModel _dataModel;
+    SqlGenerator _sqlGenerator;
 
     [TestInitialize]
     public void startup()
     {
-      var entityTypes = typeof(Entity).FindSubTypesInMe();
-      var cntStrFormat = "Server=localhost;Port=5432;Database={0};User Id=super;Password=info123;Pooling=true;MinPoolSize=10;MaxPoolSize=100;Protocol=3;";
-      dbServer = new PostgresSQLServer(entityTypes, cntStrFormat, "UnitTest");
+      _dataModel = new DataModel(typeof(Entity));
+      _sqlGenerator = new PostgresGenerator();
+    }
+
+    protected SqlBuilder<T> BuildSql<T>()
+      where T : class
+    {
+      return new SqlBuilder<T>(_dataModel, _sqlGenerator);
     }
 
     [TestMethod]
     public void  BaseQueryBuildTest()
     {
-      var selectFields = "SELECT \"Id\", \"Title\" FROM \"Categories\" WHERE (\"Id\" = 1)";
-      Assert.AreEqual(selectFields, dbServer.BuildSql<Category>().Where(c => c.Id == 1).Select(c => new { c.Id, c.Title }).ToString());
-      var selectAll = "SELECT * FROM {0}".FormatWithQuote("Categories");
-      Assert.AreEqual(selectAll, dbServer.BuildSql<Category>().ToString());
+      BuildSql<Category>().Where(c => c.Id == 1).Select(c => new { c.Id, c.Title })
+        .ToString()
+        .ShouldEqual("SELECT \"Id\", \"Title\" FROM \"Categories\" WHERE (\"Id\" = 1)");
 
+      BuildSql<Category>()
+        .ToString()
+        .ShouldEqual("SELECT * FROM \"Categories\"");
+    }
+
+    [TestMethod]
+    public void IsNullTest()
+    {
+      BuildSql<Category>().Where(c => c.CreatedAt == null).Select(c => new { c.Id, c.Title })
+        .ToString()
+        .ShouldEqual("SELECT \"Id\", \"Title\" FROM \"Categories\" WHERE (\"CreatedAt\" IS NULL)");
+
+      BuildSql<Category>().Where(c => c.CreatedAt != null).Select(c => new { c.Id, c.Title })
+        .ToString()
+        .ShouldEqual("SELECT \"Id\", \"Title\" FROM \"Categories\" WHERE (\"CreatedAt\" IS NOT NULL)");
+    }
+
+    [TestMethod]
+    public void DeleteTest()
+    {
+      var _p = new { Ids = new long[0] };
+      BuildSql<Category>().Where(c => _p.Ids.Contains(c.Id)).Delete()
+        .ToString()
+        .ShouldEqual("DELETE FROM \"Categories\" WHERE (\"Id\" IN @Ids)");
     }
 
     [TestMethod]
     public void ConditionalQueryBuildTest()
     {
+      BuildSql<Category>().Where(c => c.Id == 1 && c.Id != 5).ToString()
+        .ShouldEqual("SELECT * FROM \"Categories\" WHERE (\"Id\" = 1 AND \"Id\" <> 5)");
 
-      var selectCondition = "SELECT * FROM {0} WHERE ({1} = 1 AND {1} <> 5)".FormatWithQuote("Categories", "Id");
-      var selectConditionBuild = dbServer.BuildSql<Category>().Where(c => c.Id == 1 && c.Id != 5).ToString();
-      Assert.AreEqual(selectCondition, selectConditionBuild);
 
-      var selectConditions = "SELECT * FROM {0} WHERE ({1} = 1 AND {1} <> 5) AND (NOT {1} < 100)".FormatWithQuote("Categories", "Id");
-      var selectConditionsBuilder = dbServer.BuildSql<Category>().Where(c => c.Id == 1 && c.Id != 5).Where(c => !(c.Id < 100));
-      Assert.AreEqual(selectConditions, selectConditionsBuilder.ToString());
+      BuildSql<Category>().Where(c => c.Id == 1 && c.Id != 5).Where(c => !(c.Id < 100))
+        .ToString()
+        .ShouldEqual("SELECT * FROM \"Categories\" WHERE (\"Id\" = 1 AND \"Id\" <> 5) AND (NOT \"Id\" < 100)");
     }
 
     [TestMethod]
     public void FunctionQueryBuildTest()
     {
-      var selectAsWithCoalesce = "SELECT Coalesce({0}, {1}) AS {2} FROM {3}".FormatWithQuote("ModelNo", "Title", "ModeOrTitle", "Products");
-      Assert.AreEqual(selectAsWithCoalesce, dbServer.BuildSql<Product>().Select(p => new { ModeOrTitle = p.ModelNo ?? p.Title }).ToString());
+      BuildSql<Product>().Select(p => new { ModeOrTitle = p.ModelNo ?? p.Title }).ToString()
+        .ShouldEqual("SELECT Coalesce(\"ModelNo\", \"Title\") AS \"ModeOrTitle\" FROM \"Products\"");
     }
 
     [TestMethod]
     public void OrderbyQueryBuildTest()
     {
-      var selectOrderBy = "SELECT Coalesce({0}, {1}) AS {2} FROM {3} ORDER BY {2}".FormatWithQuote("ModelNo", "Title", "ModeOrTitle", "Products");
-      Assert.AreEqual(selectOrderBy, dbServer.BuildSql<Product>().Select(p => new { ModeOrTitle = p.ModelNo ?? p.Title }).OrderBy(p => p.ModeOrTitle).ToString());
-    }
-
-    [TestMethod]
-    public void LongPageQueryTest()
-    {
-      var selectPagination = "SELECT * FROM {0} WHERE ({1} > 5) ORDER BY {1} DESC OFFSET 40 LIMIT 10".FormatWithQuote("Products", "Id");
-      var hasNext = "SELECT EXISTS(SELECT * FROM {0} WHERE ({1} > 5) AND {1} < 20)".FormatWithQuote("Products", "Id");
-      var tmp = dbServer.BuildSql<Product>().Where(p => p.Id > 5).LongPage(10, 5);
-      Assert.AreEqual(selectPagination, tmp.ToString());
-      Assert.AreEqual(hasNext, tmp.GetHasNextSql(20));
+      BuildSql<Product>().Select(p => new { ModeOrTitle = p.ModelNo ?? p.Title }).OrderBy(p => p.ModeOrTitle).ToString()
+        .ShouldEqual("SELECT Coalesce(\"ModelNo\", \"Title\") AS \"ModeOrTitle\" FROM \"Products\" ORDER BY \"ModeOrTitle\"");
     }
 
     [TestMethod]
     public void LikeQueryTest()
     {
-      var containsConst = "SELECT * FROM {0} WHERE ({1} LIKE '%!_hello!_%' ESCAPE '!')".FormatWithQuote("Products", "Title");
-      Assert.AreEqual(containsConst, dbServer.BuildSql<Product>().Where(p => p.Title.Contains("_hello_")).ToString());
+      BuildSql<Product>().Where(p => p.Title.Contains("_hello_")).ToString()
+        .ShouldEqual("SELECT * FROM \"Products\" WHERE (\"Title\" LIKE '%!_hello!_%' ESCAPE '!')");
 
-      var criteria = new { Keyword = Sql.Like("hello") };
-      var likeExp = "SELECT * FROM {0} WHERE ({1} LIKE @Keyword ESCAPE '!')".FormatWithQuote("Products", "Title");
-      Assert.AreEqual(likeExp, dbServer.BuildSql<Product>().Where(p => p.Title.Contains(criteria.Keyword)).ToString());
+      var criteria = new { Keyword = SqlFunctions.Like("hello") };
+      BuildSql<Product>().Where(p => p.Title.Contains(criteria.Keyword)).ToString()
+        .ShouldEqual("SELECT * FROM \"Products\" WHERE (\"Title\" LIKE @Keyword ESCAPE '!')");
 
-      var startsWith = "SELECT * FROM {0} WHERE ({1} LIKE 'hello%' ESCAPE '!')".FormatWithQuote("Products", "Title");
-      Assert.AreEqual(startsWith, dbServer.BuildSql<Product>().Where(p => p.Title.StartsWith("hello")).ToString());
-      var endsWith = "SELECT * FROM {0} WHERE ({1} LIKE '%hello' ESCAPE '!')".FormatWithQuote("Products", "Title");
-      Assert.AreEqual(endsWith, dbServer.BuildSql<Product>().Where(p => p.Title.EndsWith("hello")).ToString());
+      BuildSql<Product>().Where(p => p.Title.StartsWith("hello")).ToString()
+        .ShouldEqual("SELECT * FROM \"Products\" WHERE (\"Title\" LIKE 'hello%' ESCAPE '!')");
+
+      BuildSql<Product>().Where(p => p.Title.EndsWith("hello")).ToString()
+        .ShouldEqual("SELECT * FROM \"Products\" WHERE (\"Title\" LIKE '%hello' ESCAPE '!')");
     }
 
     [TestMethod]
     public void JoinQueryTest()
     {
-      var selectByProductModel = "SELECT a.{3} AS {3}, b.{7} AS {6} FROM {0} AS a JOIN {1} AS b ON (a.{2} = b.{3}) WHERE (b.{7} = 'abc')"
-        .FormatWithQuote("Items", "Products", "ProductId", "Id", "Id", "ModelNo", "ProductModelNo", "ModelNo");
-      var selectByProductModelBuilder = dbServer.BuildSql<Item>()
+      BuildSql<Item>()
         .Join<Product>()
         .Where((i, p) => p.ModelNo == "abc")
         .Select((i, p) => new { Id = i.Id, ProductModelNo = p.ModelNo })
-        ;
-      Assert.AreEqual(selectByProductModel, selectByProductModelBuilder.ToString());
+        .ToString()
+        .ShouldEqual("SELECT a.\"Id\" AS \"Id\", b.\"ModelNo\" AS \"ProductModelNo\" FROM \"Items\" AS a JOIN \"Products\" AS b ON (a.\"ProductId\" = b.\"Id\") WHERE (b.\"ModelNo\" = 'abc')");
 
-      var m2mJoinSql = "SELECT * FROM \"Products\" AS a JOIN \"ProductProperties\" AS ab ON (ab.\"ProductId\" = a.\"Id\") JOIN \"Properties\" AS b ON (ab.\"PropertyId\" = b.\"Id\")";
-      var m2mJoinQuery = dbServer.BuildSql<Product>().Join<Property>();
-      Assert.AreEqual(m2mJoinSql, m2mJoinQuery.ToString());
+      BuildSql<Product>().Join<Property>()
+        .ToString()
+        .ShouldEqual("SELECT * FROM \"Products\" AS a JOIN \"ProductProperties\" AS ab ON (ab.\"ProductId\" = a.\"Id\") JOIN \"Properties\" AS b ON (ab.\"PropertyId\" = b.\"Id\")");
     }
 
     [TestMethod]
     public void AggregateQueryTest()
     {
-      var countQuery = dbServer.BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { total = Sql.Count(c.Id) });
-      Assert.AreEqual("SELECT Count(\"Id\") AS \"total\" FROM \"Categories\" WHERE (\"Id\" > 10)", countQuery.ToString());
+      BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { total = SqlFunctions.Count(c.Id) })
+        .ToString()
+        .ShouldEqual("SELECT Count(\"Id\") AS \"total\" FROM \"Categories\" WHERE (\"Id\" > 10)");
 
-      var avgQuery = dbServer.BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { total = Sql.Avg(c.Id) });
-      Assert.AreEqual("SELECT Avg(\"Id\") AS \"total\" FROM \"Categories\" WHERE (\"Id\" > 10)", avgQuery.ToString());
+      BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { total = SqlFunctions.Avg(c.Id) })
+        .ToString()
+        .ShouldEqual("SELECT Avg(\"Id\") AS \"total\" FROM \"Categories\" WHERE (\"Id\" > 10)");
 
-      var nowQuery = dbServer.BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { now = Sql.Now() });
-      Assert.AreEqual("SELECT Now() AS \"now\" FROM \"Categories\" WHERE (\"Id\" > 10)", nowQuery.ToString());
+      BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { now = SqlFunctions.Now() })
+        .ToString()
+        .ShouldEqual("SELECT Now() AS \"now\" FROM \"Categories\" WHERE (\"Id\" > 10)");
 
-      var roundQuery = dbServer.BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { round = Sql.Round(c.Id, 1) });
-      Assert.AreEqual("SELECT Round(\"Id\", 1) AS \"round\" FROM \"Categories\" WHERE (\"Id\" > 10)", roundQuery.ToString());
+      BuildSql<Category>().Where(c => c.Id > 10).Select(c => new { round = SqlFunctions.Round(c.Id, 1) })
+        .ToString()
+        .ShouldEqual("SELECT Round(\"Id\", 1) AS \"round\" FROM \"Categories\" WHERE (\"Id\" > 10)");
     }
 
     [TestMethod]
     public void GroupByQueryTest()
     {
-      Assert.AreEqual(
-        "SELECT Count(1) AS \"count\" FROM \"Items\" GROUP BY \"ModelNo\"",
-        dbServer.BuildSql<Item>().GroupBy(i => i.ModelNo).Select(g => new { count = Sql.Count(1) }).ToString()
-      );
-      Assert.AreEqual(
-        "SELECT * FROM \"Items\" GROUP BY \"ModelNo\" HAVING Count(1) > 10 AND (\"Id\" > 10)",
-        dbServer.BuildSql<Item>().GroupBy(i => i.ModelNo).Having(g => Sql.Count(1) > 10).Where(i => i.Id > 10).ToString()
-      );
-      Assert.AreEqual(
-        "SELECT * FROM \"Items\" AS a JOIN \"Products\" AS b ON (a.\"ProductId\" = b.\"Id\") GROUP BY a.\"ModelNo\" HAVING Count(b.\"Id\") > 10",
-        dbServer.BuildSql<Item>().Join<Product>().GroupBy((i, p) => i.ModelNo).Having((i, p) => Sql.Count(p.Id) > 10).ToString()
-      );
+      BuildSql<Item>().GroupBy(i => i.ModelNo).Select(g => new { count = SqlFunctions.Count(1) }).ToString()
+        .ShouldEqual("SELECT Count(1) AS \"count\" FROM \"Items\" GROUP BY \"ModelNo\"");
+
+      BuildSql<Item>().GroupBy(i => i.ModelNo).Having(g => SqlFunctions.Count(1) > 10).Where(i => i.Id > 10).ToString()
+        .ShouldEqual("SELECT * FROM \"Items\" GROUP BY \"ModelNo\" HAVING Count(1) > 10 AND (\"Id\" > 10)");
+
+      BuildSql<Item>().Join<Product>().GroupBy((i, p) => i.ModelNo).Having((i, p) => SqlFunctions.Count(p.Id) > 10).ToString()
+        .ShouldEqual("SELECT * FROM \"Items\" AS a JOIN \"Products\" AS b ON (a.\"ProductId\" = b.\"Id\") GROUP BY a.\"ModelNo\" HAVING Count(b.\"Id\") > 10");
     }
 
-    //[TestMethod]
+    [TestMethod]
+    public void UpdateQueryTest()
+    {
+      BuildSql<Product>().Where(p => p.Id == 1).Set(p => p.Stock, p => p.Stock + 2).ToString()
+        .ShouldEqual("UPDATE \"Products\" SET \"Stock\" = \"Stock\" + 2 WHERE (\"Id\" = 1)");
+
+      BuildSql<Product>().Where(p => p.Id == 1)
+        .Set(p => p.Stock, p => p.Stock + 2)
+        .Set(p => p.ModelNo, p => "Test")
+        .ToString()
+        .ShouldEqual("UPDATE \"Products\" SET \"Stock\" = \"Stock\" + 2, \"ModelNo\" = 'Test' WHERE (\"Id\" = 1)");
+    }
+
+    [TestMethod]
     //[TestCategory("Benchmark")]
     public void SqlBuilderBenchmark()
     {
-      var dbServer = new PostgresSQLServer(typeof(Entity).FindSubTypesInMe(), null, null);
-
       const int loops = 50000;
       Stopwatch sw = new Stopwatch();
       sw.Start();
       for (var i = 0; i < loops; i++)
       {
-        dbServer.BuildSql<Product>().Select(p => new { ModeOrTitle = p.ModelNo ?? p.Title }).OrderBy(p => p.ModeOrTitle);
+        BuildSql<Product>().Where(p => p.Id == 1).Select(p => new { ModeOrTitle = p.ModelNo ?? p.Title }).OrderBy(p => p.ModeOrTitle);
       }
       sw.Stop();
       Console.WriteLine("{0} x {1}ops spend time:{2}ms", "Select ModelOrTitle", loops, sw.Elapsed.TotalMilliseconds);
-    }
-  }
-
-  public static class Helper
-  {
-    public static string Quote(this string self)
-    {
-      return "\"" + self +  "\"";
-    }
-
-    public static string FormatWithQuote(this string self, params object[] args)
-    {
-      return self.FormatMe(args.Select(a => a.ToString().Quote()).ToArray());
     }
   }
 }

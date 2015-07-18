@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>DaggerNet</id>
+    <version>1.0.0.0</version>
+    <authors>Klesh Wong</authors>
+    <owners>Klesh Wong</owners>
+    <licenseUrl>https://github.com/klesh/Dagger.Net/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/klesh/Dagger.Net</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An "dapper dot net" enhancement. Provide Database Server basis management, migration, Linq style sql query builder.</description>
+    <tags>Dapper ORM Micro-ORM Linq Sql Migration</tags>
+  </metadata>
+  <files>
+    <file src="..\bin\Release\DaggerNet.PowerShell.dll" target="tools" />
+  </files>
+</package>
