@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DaggerNet.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace DaggerNet.Tests.Models.v3
 {

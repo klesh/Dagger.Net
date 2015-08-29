@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DaggerNet.DOM;
+using Emmola.Helpers;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using Emmola.Helpers;
-using DaggerNet.DOM;
 
 namespace DaggerNet.Linq
 {
@@ -85,17 +82,17 @@ namespace DaggerNet.Linq
       var tableLeft = Model.GetTable(Type);
       var tableRight = Model.GetTable(JoinType);
       var foreignKey = tableLeft.ForeignKeys.FirstOrDefault(fk => fk.ReferTable == tableRight);
-      if (foreignKey == null)
-      {
-        var tableMiddle = Model.GetTable(Type, JoinType);
-        var middleAlias = AliasLeft + AliasRight;
-        sql += BuildJoin(tableLeft, tableMiddle, AliasLeft, middleAlias);
-        sql += BuildJoin(tableMiddle, tableRight, middleAlias, AliasRight);
-      }
-      else
-      {
+      //if (foreignKey == null)
+      //{
+      //  var tableMiddle = Model.GetTable(Type, JoinType);
+      //  var middleAlias = AliasLeft + AliasRight;
+      //  sql += BuildJoin(tableLeft, tableMiddle, AliasLeft, middleAlias);
+      //  sql += BuildJoin(tableMiddle, tableRight, middleAlias, AliasRight);
+      //}
+      //else
+      //{
         sql = BuildJoin(tableLeft, tableRight, AliasLeft, AliasRight);
-      }
+      //}
 
       return sql;
     }

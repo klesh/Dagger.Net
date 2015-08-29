@@ -1,15 +1,12 @@
 ﻿using DaggerNet.Abstract;
 using DaggerNet.Linq;
-using DaggerNet.Migrations;
 using DaggerNet.Postgres;
 using DaggerNet.Tests.Models;
-using Emmola.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Should;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
-using Should;
 
 namespace DaggerNet.Tests
 {
@@ -22,7 +19,7 @@ namespace DaggerNet.Tests
     [TestInitialize]
     public void startup()
     {
-      _dataModel = new DataModel(typeof(Entity));
+      _dataModel = new DataModel(typeof(IEntity));
       _sqlGenerator = new PostgresGenerator();
     }
 
@@ -118,9 +115,12 @@ namespace DaggerNet.Tests
         .ToString()
         .ShouldEqual("SELECT a.\"Id\" AS \"Id\", b.\"ModelNo\" AS \"ProductModelNo\" FROM \"Items\" AS a JOIN \"Products\" AS b ON (a.\"ProductId\" = b.\"Id\") WHERE (b.\"ModelNo\" = 'abc')");
 
-      BuildSql<Product>().Join<Property>()
-        .ToString()
-        .ShouldEqual("SELECT * FROM \"Products\" AS a JOIN \"ProductProperties\" AS ab ON (ab.\"ProductId\" = a.\"Id\") JOIN \"Properties\" AS b ON (ab.\"PropertyId\" = b.\"Id\")");
+      var t = BuildSql<Product>()
+        .Join<Category>()
+        .Where((p, c) => p.Id == 2)
+        .Select((p, c) => p);
+
+      Console.WriteLine(t);
     }
 
     [TestMethod]

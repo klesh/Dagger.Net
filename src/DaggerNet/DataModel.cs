@@ -24,7 +24,8 @@ namespace DaggerNet
     {
       _tables = new Class2Dom(baseType.FindSubTypesInIt()).AddType<MigrationHistory>()
         .Produce().ToDictionary(
-          t => t.Type == null ? GetTableKey(t.ManyToMany) : GetTableKey(t.Type),
+          //t => t.Type == null ? GetTableKey(t.ManyToMany) : GetTableKey(t.Type),
+          t => t.Type.Name,
           t => t
         );
     }
@@ -34,21 +35,21 @@ namespace DaggerNet
     /// </summary>
     /// <param name="types">Type/Two Types(M2M)</param>
     /// <returns>Table Key</returns>
-    public string GetTableKey(params Type[] types)
-    {
-      if (!types.Any() || types.Length > 2)
-        throw new ArgumentException("Accept only One or Two types");
+    //public string GetTableKey(params Type[] types)
+    //{
+    //  if (!types.Any() || types.Length > 2)
+    //    throw new ArgumentException("Accept only One or Two types");
 
-      return types.Length == 1 ? types[0].Name : types.Select(t => t.Name).OrderBy(n => n).Implode("|");
-    }
+    //  return types.Length == 1 ? types[0].Name : types.Select(t => t.Name).OrderBy(n => n).Implode("|");
+    //}
 
 
     /// <summary>
     /// Return table for Type or Types(many-to-many)
     /// </summary>
-    public Table GetTable(params Type[] types)
+    public Table GetTable(Type type)
     {
-      var tableKey = GetTableKey(types);
+      var tableKey = type.Name;
 
       if (!_tables.ContainsKey(tableKey))
         throw new Exception("Table not found for " + tableKey);

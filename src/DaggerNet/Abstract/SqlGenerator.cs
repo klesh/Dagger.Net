@@ -92,7 +92,7 @@ namespace DaggerNet.Abstract
       _builder = new StringBuilder();
       foreach (var table in tables)
       {
-        Begin(true).CreateTable(table).End();
+        Begin(true).CreateTable(table);
       }
 
       foreach (var table in tables)
@@ -125,8 +125,9 @@ namespace DaggerNet.Abstract
 
       var tableDiff = from.Diff(to);
 
-      foreach (var table in tableDiff.Creation)
-        Begin(true).CreateTable(table);
+      //foreach (var table in tableDiff.Creation)
+      //  Begin(true).CreateTable(table);
+      CreateTables(tableDiff.Creation);
 
       foreach (var pair in tableDiff.Comparison)
       {
@@ -160,7 +161,8 @@ namespace DaggerNet.Abstract
         var newPk = pair.Value.PrimaryKey.Columns.Select(pko => pko.Value.Name).Implode(", ");
         if (newPk != oldPk) // column changed
         {
-          Begin().DropConstraint(pair.Key.PrimaryKey).End();
+          if (oldPk.IsValid())
+            Begin().DropConstraint(pair.Key.PrimaryKey).End();
           keyCreation.Add(pair.Value.PrimaryKey);
         }
         else if (pair.Key.PrimaryKey.Name != pair.Value.PrimaryKey.Name) // name changed
@@ -253,7 +255,7 @@ namespace DaggerNet.Abstract
 
       End();
 
-      if (table.PrimaryKey != null)
+      if (table.PrimaryKey != null && table.PrimaryKey.Columns.Any())
         Begin().AddPrimaryKey(table.PrimaryKey).End();
 
       foreach (var index in table.Indexes)

@@ -95,11 +95,11 @@ namespace DaggerNet
         var updateTimeCol = table.Columns.FirstOrDefault(c => c.UpdateTime);
         if (updateTimeCol != null)
         { // refresh update time.
-          var updateTimeSql = Manager.GetUpdateTimeSql(table, updateTimeCol);
+          var updateTimeSql = Manager.GetUpdateTimeSql(table);
           var now = DateTime.Now;
 
           var dynamicParam = new DynamicParameters(entity);
-          dynamicParam.Add("UpdateTime", now);
+          dynamicParam.Add("_UPDATE_TIME_", now);
           var ret2 = this.Execute(updateTimeSql, dynamicParam);
           if (ret2 == 1)
           {
@@ -134,25 +134,38 @@ namespace DaggerNet
         throw new ArgumentException("primaryKey values are not match");
 
       var column = table.Columns.First(c => c.Name.IcEquals(propertyName));
-      var columnValue = Convert.ChangeType(propertyValue, column.PropertyInfo.PropertyType);
+      if (!column.PropertyInfo.PropertyType.IsNullableType())
+        propertyValue = Convert.ChangeType(propertyValue, column.PropertyInfo.PropertyType);
       var primaryKeys = table.PrimaryKey.Columns.Select(c => c.Value).ToArray();
       var primaryValues = Enumerable.Range(0, primarkeyValues.Length).
         Select(index => 
           Convert.ChangeType(primarkeyValues[index], primaryKeys[index].PropertyInfo.PropertyType)).ToArray();
 
+      var param = new DynamicParameters();
+
       var sql = "UPDATE {0} SET {1} = {2} WHERE {3}".FormatMe(
         Sql.QuoteTable(table),
-        Sql.QuoteColumn(column),
+        Sql.QuoteColumn(column), 
         "@" + column.Name,
         primaryKeys.Select(pk => "{0} = {1}".FormatMe(Sql.QuoteColumn(pk), "@" + pk.Name)).Implode(" AND ")
         );
-      var param = new DynamicParameters();
-      param.Add(column.Name, columnValue);
+      param.Add(column.Name, propertyValue);
       for (int i = 0, j = primaryKeys.Length; i < j; i++)
       {
         param.Add(primaryKeys[i].Name, primaryValues[i]);
       }
-      return this.Execute(sql, param);
+      var affected = this.Execute(sql, param);
+      if (affected == 1)
+      {
+        var updateTimeSql = Manager.GetUpdateTimeSql(table);
+        if (updateTimeSql.IsValid())
+        {
+          var updateTimeParams = new DynamicParameters(param);
+          updateTimeParams.Add("_UPDATE_TIME_", DateTime.Now);
+          this.Execute(updateTimeSql, updateTimeParams);
+        }
+      }
+      return affected;
     }
 
     public virtual async Task<int> UpdateCellAsync(string propertyName, object propertyValue, string typeName, params object[] primaryKeyValues)

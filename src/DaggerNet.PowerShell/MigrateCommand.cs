@@ -17,7 +17,17 @@ namespace DaggerNet.PowerShell
   {
     public MigrateCommand(string name)
     {
-      Execute(name);
+      try
+      {
+        Execute(name);
+      }
+      catch(Exception ex)
+      {
+        AppDomain.CurrentDomain.SetData("wasError", true);
+        AppDomain.CurrentDomain.SetData("error.Message", ex.Message);
+        AppDomain.CurrentDomain.SetData("error.TypeName", name);
+        AppDomain.CurrentDomain.SetData("error.StackTrace", ex.StackTrace);
+      }
     }
 
     protected Project Project
@@ -55,7 +65,17 @@ namespace DaggerNet.PowerShell
         lastMigration = dagger.From<MigrationHistory>(s => s.OrderByDescending(mh => mh.Id).Limit(1)).FirstOrDefault();
       }
 
-      var lastModel = ObjectHelper.FromBinary<IEnumerable<Table>>(lastMigration.Model);
+      IEnumerable<Table> lastModel = null;
+      try
+      {
+        lastModel = ObjectHelper.FromBinary<IEnumerable<Table>>(lastMigration.Model);
+      }
+      catch
+      {
+        if (lastMigration.ProductVersion != Assembly.GetExecutingAssembly().GetName().Version.ToString())
+          throw new Exception("Cannot migrate between different Dagger Version.");
+        throw;
+      }
       var sqlScript = dataFactory.Server.Sql.CreateMigration(lastModel, dataFactory.Model.Tables);
       var csTemplate = Assembly.GetExecutingAssembly().GetResourceText("DaggerNet.PowerShell.Templates.Migration.cs");
       var rootNameSpace = Project.GetRootNamespace();

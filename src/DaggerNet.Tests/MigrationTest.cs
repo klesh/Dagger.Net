@@ -19,27 +19,56 @@ namespace DaggerNet.Tests
     /// Make sure SQL SCRIPT come out as expected
     /// </summary>
     [TestMethod]
-    public void MigrationScriptTest()
+    public void MigrationDownScriptTest()
     {
       //var dom1 = new Class2Dom(typeof(v1.Post)).Produce();
       var dom2 = new Class2Dom(typeof(v2.Entity).FindSubTypesInMe()).Produce();
-      var dom3 = new Class2Dom(typeof(v3.Entity).FindSubTypesInMe()).Produce();
+      var dom3 = new Class2Dom(typeof(v3.IEntity).FindSubTypesInMe()).Produce();
 
       var generator = new PostgresGenerator();
 
       //Console.WriteLine(generator.CreateMigration(dom1, dom2));
-      var scripts = generator.CreateMigration(dom3, dom2).Split(new string[] { SqlGenerator.DELETION_SEPARATOR }, StringSplitOptions.None);
+      var sql = generator.CreateMigration(dom3, dom2);
+      Console.WriteLine("Sql Script:");
+      Console.WriteLine(sql);
+
+      var scripts = sql.Split(new string[] { SqlGenerator.DELETION_SEPARATOR }, StringSplitOptions.None);
+
       var creation_part = scripts[0].Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
       var deletion_part = scripts[1].Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
 
-      Assert.AreEqual(3, creation_part.Length);
-      Assert.IsTrue(creation_part.Contains("ALTER TABLE \"Posts\" ALTER COLUMN \"Title\" SET DEFAULT test;"));
-      Assert.IsTrue(creation_part.Contains("ALTER TABLE \"Posts\" RENAME COLUMN \"Content1\" TO \"Content\";"));
-      Assert.IsTrue(creation_part.Contains("ALTER INDEX \"IX_Post_Content1\" RENAME TO \"IX_Post_Content\";"));
+      //Assert.AreEqual(3, creation_part.Length);
+      creation_part.ShouldContain("ALTER TABLE \"Posts\" ALTER COLUMN \"Title\" SET DEFAULT 'test';");
+      creation_part.ShouldContain("ALTER TABLE \"Posts\" RENAME COLUMN \"Content1\" TO \"Content\";");
+      creation_part.ShouldContain("ALTER INDEX \"IX_Post_Content1\" RENAME TO \"IX_Post_Content\";");
 
-      Assert.AreEqual(2, deletion_part.Length);
-      Assert.IsTrue(deletion_part.Contains("ALTER TABLE \"Posts\" DROP COLUMN \"CreatedAt\";"));
-      Assert.IsTrue(deletion_part.Contains("DROP TABLE \"Users\";"));
+      Assert.AreEqual(3, deletion_part.Length);
+      deletion_part.ShouldContain("ALTER TABLE \"Posts\" DROP COLUMN \"CreatedAt\";");
+      deletion_part.ShouldContain("DROP TABLE \"Users\";");
+    }
+
+    [TestMethod]
+    public void MigrationUpScriptTest()
+    {
+      var dom1 = new Class2Dom(typeof(v1.IEntity).FindSubTypesInMe()).Produce();
+      var dom2 = new Class2Dom(typeof(v2.Entity).FindSubTypesInMe()).Produce();
+      var dom3 = new Class2Dom(typeof(v3.IEntity).FindSubTypesInMe()).Produce();
+
+      var post_v1 = dom1.First(t => t.Name == "Post");
+
+      var generator = new PostgresGenerator();
+
+      //Console.WriteLine(generator.CreateMigration(dom1, dom2));
+      var sql1to2 = generator.CreateMigration(dom1, dom2);
+      Console.WriteLine("V1 to V2 Sql Script:");
+      Console.WriteLine(sql1to2);
+      sql1to2.ShouldContain("ALTER TABLE \"Posts\" ADD CONSTRAINT \"FK_Post_BlogId\" FOREIGN KEY (\"BlogId\") REFERENCES \"Blogs\" (\"Id\") ON DELETE CASCADE;");
+      sql1to2.ShouldContain("ALTER TABLE \"Posts\" ADD CONSTRAINT \"PK_Post\" PRIMARY KEY (\"Id\");");
+
+
+      var sql2to3 = generator.CreateMigration(dom2, dom3);
+      Console.WriteLine("V2 to V3 Sql Script:");
+      Console.WriteLine(sql2to3);
     }
 
     [TestMethod]

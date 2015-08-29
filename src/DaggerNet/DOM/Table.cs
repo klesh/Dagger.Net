@@ -12,8 +12,8 @@ namespace DaggerNet.DOM
   {
     [NonSerialized]
     private Type _type;
-    [NonSerialized]
-    private Type[] _m2m;
+    //[NonSerialized]
+    //private Type[] _m2m;
 
     public Table()
     {
@@ -40,11 +40,11 @@ namespace DaggerNet.DOM
     /// many to many relation table
     /// </summary>
     /// <param name="m2m">Ordered 2 types</param>
-    public Table(Type[] m2m)
-      :this()
-    {
-      _m2m = m2m;
-    }
+    //public Table(Type[] m2m)
+    //  :this()
+    //{
+    //  _m2m = m2m;
+    //}
 
     /// <summary>
     /// Rlative type
@@ -54,7 +54,7 @@ namespace DaggerNet.DOM
     /// <summary>
     /// As in many-to-many
     /// </summary>
-    internal Type[] ManyToMany { get { return _m2m; } }
+    //internal Type[] ManyToMany { get { return _m2m; } }
 
     /// <summary>
     /// We have an auto incremental id column in most case.

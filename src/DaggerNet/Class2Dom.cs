@@ -58,23 +58,23 @@ namespace DaggerNet
           var isBinary = property.PropertyType == typeof(byte[]);
 
           // try to figure out many-to-many relationship
-          if (propertyType.IsEnumerable())
-          {
-            var elementType = propertyType.GetElementTypeExt();
-            var otherTable = tables.FirstOrDefault(t => t.Type == elementType);
-            if (otherTable != null)
-            {
-              // find out other type has IEnumerable property to this type.
-              var otherType = otherTable.Type;
-              var otherProperties = otherType.GetReadWriteProperties()
-                .Where(pi => pi.PropertyType.IsEnumerable() && pi.PropertyType.GetElementTypeExt() == type).ToArray(); 
-              if (otherProperties.Length == 1) // found matched many-to-many relationship
-              { // not all columns are surely added, postpond the build up.
-                var m2mTable = new Table(new Type[] {type, otherTable.Type}.OrderBy(t => t.Name).ToArray());
-                tables.Add(m2mTable);
-              }
-            }
-          }
+          //if (propertyType.IsEnumerable())
+          //{
+          //  var elementType = propertyType.GetElementTypeExt();
+          //  var otherTable = tables.FirstOrDefault(t => t.Type == elementType);
+          //  if (otherTable != null)
+          //  {
+          //    // find out other type has IEnumerable property to this type.
+          //    var otherType = otherTable.Type;
+          //    var otherProperties = otherType.GetReadWriteProperties()
+          //      .Where(pi => pi.PropertyType.IsEnumerable() && pi.PropertyType.GetElementTypeExt() == type).ToArray(); 
+          //    if (otherProperties.Length == 1) // found matched many-to-many relationship
+          //    { // not all columns are surely added, postpond the build up.
+          //      var m2mTable = new Table(new Type[] {type, otherTable.Type}.OrderBy(t => t.Name).ToArray());
+          //      tables.Add(m2mTable);
+          //    }
+          //  }
+          //}
 
           // try to resolve complex type by convert it to JSON field.
           if (propertyType.HasAttribute<ComplexTypeAttribute>())
@@ -236,7 +236,7 @@ namespace DaggerNet
         if (tmp.Count() == 1)
           table.IdColumn = tmp.First();
 
-        if (table.Columns.Any(c => c.PrimaryKey))
+        //if (table.Columns.Any(c => c.PrimaryKey))
           table.PrimaryKey = new PrimaryKey(table);
 
         if (table.Columns.Count(c => c.UpdateTime) > 1)
@@ -249,37 +249,37 @@ namespace DaggerNet
       {
 
         // Build up many-to-many tables
-        if (table.ManyToMany != null)
-        {
-          int p = 0;
-          foreach (var oneType in table.ManyToMany)
-          {
-            var oneTable = tables.First(t => t.Type == oneType);
-            var oneFk = new ForeignKey(table, oneType);
-            int i = 0;
-            if (oneTable.PrimaryKey == null)
-              throw new Exception("Many-To-Many fail due to Type {0} has no primary key".FormatMe(oneType.FullName));
+        //if (table.ManyToMany != null)
+        //{
+        //  int p = 0;
+        //  foreach (var oneType in table.ManyToMany)
+        //  {
+        //    var oneTable = tables.First(t => t.Type == oneType);
+        //    var oneFk = new ForeignKey(table, oneType);
+        //    int i = 0;
+        //    if (oneTable.PrimaryKey == null)
+        //      throw new Exception("Many-To-Many fail due to Type {0} has no primary key".FormatMe(oneType.FullName));
 
-            foreach (var pkc in oneTable.PrimaryKey.Columns)
-            {
-              var pk = pkc.Value;
-              var oneCol = new Column(table);
-              oneCol.Name = oneTable.Name + pk.Name;
-              oneCol.DataType = pk.DataType;
-              oneCol.Precision = pk.Precision;
-              oneCol.NotNull = true;
-              oneCol.PrimaryKey = true;
-              oneCol.Order = p++;
-              table.Columns.Add(oneCol);
+        //    foreach (var pkc in oneTable.PrimaryKey.Columns)
+        //    {
+        //      var pk = pkc.Value;
+        //      var oneCol = new Column(table);
+        //      oneCol.Name = oneTable.Name + pk.Name;
+        //      oneCol.DataType = pk.DataType;
+        //      oneCol.Precision = pk.Precision;
+        //      oneCol.NotNull = true;
+        //      oneCol.PrimaryKey = true;
+        //      oneCol.Order = p++;
+        //      table.Columns.Add(oneCol);
 
-              oneFk.Columns.Add(new Ordered<Column>(oneCol, i++));
-            }
-            oneFk.OnDelete = Cascades.Cascade;
-            table.ForeignKeys.Add(oneFk);
-            table.Name += oneType.Name;
-          }
-          table.PrimaryKey = new PrimaryKey(table);
-        }
+        //      oneFk.Columns.Add(new Ordered<Column>(oneCol, i++));
+        //    }
+        //    oneFk.OnDelete = Cascades.Cascade;
+        //    table.ForeignKeys.Add(oneFk);
+        //    table.Name += oneType.Name;
+        //  }
+        //  table.PrimaryKey = new PrimaryKey(table);
+        //}
 
         if (!table.ForeignKeys.Any())
           continue;
@@ -294,7 +294,7 @@ namespace DaggerNet
           var refKeys = refTable.PrimaryKey.Columns.Select(oc => oc.Value).ToList();
 
           if (foreignKey.Columns.Count != refKeys.Count)
-            throw new Exception("Foreign keys not match, Source: {0} Target: {1} ({2})".FormatMe(
+            throw new Exception("Foreign keys are not matched, Source: {0} Target: {1} ({2})".FormatMe(
               foreignKey, 
               refTable.Name,
               refKeys.Select(c => c.Name).Implode(", ")

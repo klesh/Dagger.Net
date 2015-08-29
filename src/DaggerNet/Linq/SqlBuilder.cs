@@ -1,12 +1,7 @@
-﻿using DaggerNet.DOM;
-using System;
-using System.Collections.Generic;
-using DaggerNet.Abstract;
-using System.Linq.Expressions;
+﻿using DaggerNet.Abstract;
 using Emmola.Helpers;
-using System.Linq;
-using System.Reflection;
-using System.Text;
+using System;
+using System.Linq.Expressions;
 
 namespace DaggerNet.Linq
 {

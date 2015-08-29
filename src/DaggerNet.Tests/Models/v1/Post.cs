@@ -3,9 +3,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DaggerNet.Tests.Models.v1
 {
-  public class Post
+  public interface IEntity
   {
-    [PrimaryKey(AutoIncrement = true)]
+
+  }
+
+  public class Post : IEntity
+  {
+    //[PrimaryKey(AutoIncrement = true)]
     public int Id { get; set; }
 
     [MaxLength(255)]

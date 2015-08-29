@@ -113,18 +113,25 @@ namespace DaggerNet
       });
     }
 
-    public string GetUpdateTimeSql(Table table, Column updateTimeCol)
+    public string GetUpdateTimeSql(Table table)
     {
       return GetCachedSQL(table, null, ref _updateTimes, () =>
       {
-        var whereStatment = table.PrimaryKey.Columns.Select(oc => "{0}=@{1}".FormatMe(
-            Sql.QuoteColumn(oc.Value),
-            oc.Value.Name
-          )).Implode(", ");
-        return "UPDATE {2} SET {0}=@UpdateTime WHERE {1}".FormatMe(
-          Sql.QuoteColumn(updateTimeCol),
-          whereStatment,
-          Sql.QuoteTable(table));
+        var setClauses = table.Columns.Where(c => c.UpdateTime)
+                          .Select(c => "{0} = @_UPDATE_TIME_".FormatMe(Sql.QuoteColumn(c)))
+                          .Implode(", ");
+        if (setClauses.IsValid())
+        {
+          var whereStatment = table.PrimaryKey.Columns.Select(oc => "{0}=@{1}".FormatMe(
+              Sql.QuoteColumn(oc.Value),
+              oc.Value.Name
+            )).Implode(", ");
+          return "UPDATE {0} SET {1} WHERE {2}".FormatMe(
+            Sql.QuoteTable(table),
+            setClauses,
+            whereStatment);
+        }
+        return null;
       });
     }
 
@@ -143,7 +150,7 @@ namespace DaggerNet
         {
           whereToDelete = table.PrimaryKey.Columns.Select(pc => pc.Value);
         }
-        var whereClause = whereToDelete.Select(c => "{0}={1}".FormatMe(Sql.QuoteColumn(c), "@" + c.Name)).Implode(", ");
+        var whereClause = whereToDelete.Select(c => "{0}={1}".FormatMe(Sql.QuoteColumn(c), "@" + c.Name)).Implode(" AND ");
         if (!whereClause.IsValid())
           throw new ArgumentException("Can not find any column for type: " + (actualType ?? table.Type).FullName);
         return "DELETE FROM {0} WHERE {1}".FormatMe(Sql.QuoteTable(table), whereClause);

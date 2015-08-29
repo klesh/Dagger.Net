@@ -27,8 +27,11 @@
       $null,
       $null) | Out-Null
     $created = $domain.GetData('created');
-    write-host "Migration file created: $created"
-    $project.DTE.ItemOperations.OpenFile($created) | Out-Null
+	if ($created)
+	{
+		write-host "Migration file created: $created"
+		$project.DTE.ItemOperations.OpenFile($created) | Out-Null
+	}
   }
   finally
   {

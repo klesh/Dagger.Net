@@ -1,4 +1,5 @@
 ﻿using DaggerNet.Attributes;
+using System;
 using System.Collections.Generic;
 
 namespace DaggerNet.Tests.Models
@@ -11,5 +12,10 @@ namespace DaggerNet.Tests.Models
     public HashSet<Category> Children { get; set; }
 
     public Category Parent { get; set; }
+
+    public string ReadOnly
+    {
+      get { return string.Empty; }
+    }
   }
 }

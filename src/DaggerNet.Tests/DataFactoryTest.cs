@@ -16,7 +16,7 @@ namespace DaggerNet.Tests
   public class DataFactoryTest : DataFactory<PostgresServer>
   {
     public DataFactoryTest()
-      : base (typeof(Entity), DataServerTest.ConnectionStringFormat, "DaggerTest")
+      : base (typeof(IEntity), DataServerTest.ConnectionStringFormat, "DaggerTest")
     {
     }
 
@@ -200,6 +200,11 @@ namespace DaggerNet.Tests
         sw.Stop();
         Console.WriteLine("Insert Cost: {0}", sw.Elapsed.TotalMilliseconds);
 
+        dagger.UpdateCell("Title", "Update Cell Test", "Category", category.Id.ToString());
+        dagger.Query<Category>("SELECT * FROM \"Categories\" WHERE \"Id\" = @Id", category)
+          .First()
+          .UpdatedAt.ShouldBeNull();
+
         sw.Restart();
         dagger.UpdateCell("Title", "Update Cell Updated", "Category", category.Id.ToString())
           .ShouldEqual(1);
@@ -210,6 +215,8 @@ namespace DaggerNet.Tests
         var dbCategory2 = dagger.Query<Category>("SELECT * FROM \"Categories\" WHERE \"Id\" = @Id", category).First();
         sw.Stop();
         Console.WriteLine("Pure Select Cost: {0}", sw.Elapsed.TotalMilliseconds);
+
+        dbCategory2.UpdatedAt.ShouldNotEqual(null);
 
         sw.Restart();
         dagger.By(category)
@@ -238,6 +245,28 @@ namespace DaggerNet.Tests
     }
 
     [TestMethod]
+    public void UpdateTimeTest()
+    {
+      var category = new Category { Title = "UpdateTime Category" };
+      using (var dagger = this.Draw())
+      {
+        dagger.Insert<Category>(category);
+
+        category.UpdatedAt.ShouldBeNull();
+
+        dagger.Update<Category>(new { Id = category.Id, Title = "New Category Title" });
+
+        // category.UpdatedAt.ShouldNotEqual(null);
+
+        var dbCategory = dagger.By(category)
+          .From<Category>((_b, _p) => _b.Where(c => c.Id == _p.Id))
+          .FirstOrDefault();
+
+        dbCategory.UpdatedAt.ShouldNotEqual(null);
+      }
+    }
+
+    //[TestMethod]
     public void ListSupportTest()
     {
       using (var dagger = this.Draw())
@@ -265,6 +294,51 @@ namespace DaggerNet.Tests
           "select * from (select 1 as Id union all select 2 union all select 3) as X where Id in @Ids", 
           new { Ids = new int[] { 1, 2, 3 } }
           );
+      }
+    }
+
+    [TestMethod]
+    public void Many2ManyTest()
+    {
+      var category = new Category { Title = "M2M category" };
+      var product = new Product { Title = "M2M product", ModelNo = "M2M" };
+      var property = new Property { Title = "M2M property" };
+
+      using (var dagger = this.Draw())
+      {
+        dagger.Insert<Category>(category);
+        product.CategoryId = category.Id;
+        dagger.Insert<Product>(product);
+        dagger.Insert<Property>(property);
+        product.Id.ShouldBeGreaterThan(0);
+        property.Id.ShouldBeGreaterThan(0);
+
+        var oldCount = dagger.ExecuteScalar<long>("SELECT COUNT(1) FROM \"ProductProperties\"");
+        var productProperty = new ProductProperty { ProductId = product.Id, PropertyId = property.Id };
+        dagger.Insert<ProductProperty>(productProperty);
+        var newCount = dagger.ExecuteScalar<long>("SELECT COUNT(1) FROM \"ProductProperties\"");
+        newCount.ShouldEqual(oldCount + 1);
+      }
+    }
+
+    [TestMethod]
+    public void CategoryParentTest()
+    {
+      using (var dagger = this.Draw())
+      {
+        var root = new Category { Title = "root" };
+        var child = new Category { Title = "child" };
+        dagger.Insert<Category>(root);
+        dagger.Insert<Category>(child);
+
+        root.Id.ShouldBeGreaterThan(0);
+        dagger.UpdateCell("ParentId", root.Id, "Category", child.Id);
+
+        var dbChild = dagger.By(child)
+          .From<Category>((_b, _p) => _b.Where(c => c.Id == _p.Id))
+          .FirstOrDefault();
+
+        dbChild.ParentId.ShouldEqual(root.Id);
       }
     }
   }

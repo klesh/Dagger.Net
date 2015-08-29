@@ -97,6 +97,7 @@
     <Compile Include="Models\v3\Blog.cs" />
     <Compile Include="Models\v3\Entity.cs" />
     <Compile Include="Models\v3\Post.cs" />
+    <Compile Include="Models\v3\PostContributors.cs" />
     <Compile Include="Models\v3\User.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\Entity.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="Models\Product.cs" />
     <Compile Include="Models\Property.cs" />
     <Compile Include="DataServerTest.cs" />
+    <Compile Include="Models\ProductProperty.cs" />
     <Compile Include="SqlBuilderTest.cs" />
     <Compile Include="MigrationTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,6 +1,7 @@
 ﻿using DaggerNet.Attributes;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DaggerNet.Tests.Models
 {
@@ -9,6 +10,9 @@ namespace DaggerNet.Tests.Models
     [Reference(typeof(Category))]
     [Unique(Name = "IX_CategoryId_Id", Order = 1)]
     public long CategoryId { get; set; }
+
+    [NotMapped]
+    public string CategoryTitle { get; set; }
 
     [Unique(Name = "IX_CategoryId_Id", Order = 2, Descending = true)]
     public override long Id { get; set; }
@@ -21,8 +25,6 @@ namespace DaggerNet.Tests.Models
     public string Content { get; set; }
 
     public HashSet<Item> Items { get; set; }
-
-    public HashSet<Property> Properties { get; set; }
 
     public long Stock { get; set; }
   }
